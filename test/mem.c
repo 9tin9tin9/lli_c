@@ -1,7 +1,7 @@
 #include "../src/include/mem.h"
 #include "test.h"
 
-START_TEST()
+START_TEST();
 
 void
 pmem_at()
@@ -59,9 +59,10 @@ readLtl()
     Mem m = Mem_new();
     Vec s = Vec_from(double, 'a', 's', 'd', 0);
     Mem_nmem_alloc(&m, s);
-    Mem_nmem_alloc(&m, Vec_from(double, 0.0));
+    Mem_nmem_push(&m, 0);
     Str r = Str();
     Mem_readLtl(m, -1, &r);
+    printf("String: %s\n", Str_at(r, 0));
     REQUIRE(strcmp(Str_at(r, 0), "asd") == 0);
 }
 

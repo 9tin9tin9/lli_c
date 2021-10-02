@@ -32,8 +32,7 @@ Error Signal_respond(Signal, Mem*, Code*, Hashmap);
 typedef Error (*OpFunc)(Vec, Mem*, Signal*);
 #define defOp(name) Error name(Vec, Mem*, Signal*)
 
-// Hashmap<const char*, size_t>, Vec<OpFunc>
-void init_op_table(Hashmap*, Vec*);
+void init_op_table();
 Error exec(Mem*, Code, Signal*);
 
 // Extend Tok

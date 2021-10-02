@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define START_TEST() bool TOTAL_RESULT = true;
+#define START_TEST() bool TOTAL_RESULT = true
 
 #define REQUIRE(bool_) { \
     bool b = (bool_);\

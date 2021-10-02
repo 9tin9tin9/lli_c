@@ -2,7 +2,7 @@
 #include "../src/include/lex.h"
 #include "test.h"
 
-START_TEST()
+START_TEST();
 
 void
 push(){

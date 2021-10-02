@@ -28,6 +28,8 @@ void Mem_pmem_push(Mem*, double);
 Error Mem_nmem_at(Mem, size_t, double*);
 Error Mem_nmem_set(Mem*, size_t, double);
 size_t Mem_nmem_len(Mem);
+// Vec will be COPIED
+void Mem_nmem_alloc(Mem*, Vec);
 void Mem_nmem_push(Mem*, double);
 
 // returns the index of inserted var

@@ -4,7 +4,6 @@
 Error
 nop(Vec v, Mem* m, Signal* s)
 {
-    printf("no op\n");
     *s = Signal(None, 0);
     return Ok;
 }

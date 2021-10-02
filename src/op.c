@@ -2,15 +2,15 @@
 #include "include/opdef.h"
 
 #define addEntry(op) { \
-    Vec_push(v, op); \
-    Hashmap_insert(h, op, Vec_count(*v)); \
+    Vec_push(&funcVec, op); \
+    Hashmap_insert(&opIdxTable, op, Vec_count(funcVec)); \
 }
 
-Hashmap opIdxTable;
-Vec funcVec;
+Hashmap opIdxTable = Hashmap();
+Vec funcVec = Vec(OpFunc);
 
 void
-init_op_table(Hashmap* h, Vec* v)
+init_op_table()
 {
     addEntry(&nop);
 }

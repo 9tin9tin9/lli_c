@@ -89,6 +89,11 @@ Mem_nmem_len(Mem self)
 }
 
 void
+Mem_nmem_alloc(Mem* self, Vec v){
+    Vec_insert(&self->nmem, v, Vec_count(self->nmem));
+}
+
+void
 Mem_nmem_push(Mem* self, double v)
 {
     Vec_push(&self->nmem, v);
@@ -156,5 +161,18 @@ Error
 Mem_readLtl(Mem self, long idx, Str* des)
 {
     int zeroCount = 0;
-    
+    while(1){
+        double c;
+        Error r = Mem_mem_at(self, idx, &c);
+        if (r) return r;
+        if (c == 0.0){
+            if (++zeroCount == 2){
+                return Ok;
+            }
+        }else{
+            zeroCount = 0;
+        }
+        Str_push(des, (char)c);
+        idxIncr(&idx, 1);
+    }
 }

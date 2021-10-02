@@ -11,6 +11,7 @@ passLexAndExec()
     Code_push(&c, line, 0);
     Mem m = Mem_new();
     Signal s;
+    init_op_table();
     Error r = exec(&m, c, &s);
     REQUIRE(r == Ok);
     REQUIRE(s.type == None);

@@ -6,7 +6,7 @@ passed=1
 failed=2
 
 # Variables
-parallel=1
+parallel=0
 tests=()
 
 print_msg(){
@@ -76,9 +76,11 @@ else
                     tests+=($s)
                 done
                 ;;
+            "-p" )
+                parallel=1
+                ;;
             "-np" )
                 parallel=0
-                # include_all_tests
                 ;;
             *)
                 tests+=(${a%.c})
