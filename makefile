@@ -27,6 +27,8 @@ run:
 	@make build
 	@./$(BINDIR)/main
 
+src/main: $(OBJ)
+
 all: $(OBJ)
 
 $(OBJ): $(OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADER) makefile
