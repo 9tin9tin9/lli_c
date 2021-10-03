@@ -3,14 +3,14 @@
 
 #define addEntry(op) { \
     Vec_push(&funcVec, op); \
-    Hashmap_insert(&opIdxTable, op, Vec_count(funcVec)); \
+    Hashmap_insert(&opIdxTable, Str_fromLtl(#op), Vec_count(funcVec)-1); \
 }
 
 Hashmap opIdxTable = Hashmap();
 Vec funcVec = Vec(OpFunc);
 
 void
-init_op_table()
+op_initOpTable()
 {
     addEntry(&nop);
 }
@@ -20,12 +20,24 @@ init_op_table()
 // Do NOT free Signal
 // Signal.Src is owned by Code
 Error
-exec(Mem* m, Code c, Signal* result)
+op_exec(Mem* m, Code c, Signal* result)
 {
     Line* l = Code_curr(c);
     // TokType should have been checked during preprocessing already
     size_t opcode = l->opcode;
     return (*Vec_at(funcVec, opcode, OpFunc))(l->toks, m, result);
+}
+
+Error
+Signal_respond(Signal self, Mem* m, Code* c)
+{
+    switch (self.type) {
+        case None:
+            break;
+    }
+
+    Code_ptr_incr(c, 1);
+    return Ok;
 }
 
 // Extend Tok

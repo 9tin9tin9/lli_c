@@ -64,7 +64,7 @@ Tok_eq(Tok left, Tok right)
     s.size -= s.size - end_ + start_;\
 }
 
-int
+Error
 Tok_fromStr(Tok* tok, Str s)
 {
     if (Str_len(s) == 0){
@@ -223,25 +223,29 @@ eat_token(
     return Tok_fromStr(tok, current);
 }
 
-int
+Error
 eat_operator(Tok* tok, size_t* ptr, Str s)
 {
-    return eat_token(tok, s, ptr, ':', ',', 0);
+    Error r = eat_token(tok, s, ptr, ':', ',', 0);
+    if (r) return r;
+    if (tok->tokType != Sym) 
+        return Error_WrongTokTypeForOp;
+    return Ok;
 }
 
-int
+Error
 eat_args(Tok* tok, size_t* ptr, Str s)
 {
     return eat_token(tok, s, ptr, ',', ':', 0);
 }
 
 Error
-Tok_tokenize(Vec* des, Str s)
+lex_tokenize(Vec* des, Str s)
 {
     // points to the idx that have read
     size_t ptr = 0;
     Tok tok;
-    int result = eat_operator(&tok, &ptr, s);
+    Error result = eat_operator(&tok, &ptr, s);
     // if error
     if (result) return result;
     switch (tok.tokType) {

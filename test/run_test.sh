@@ -91,7 +91,7 @@ fi
 if [[ -e failed.txt ]]; then rm failed.txt; fi
 
 cd ..
-make build
+make all
 cd -
 
 for n in "${tests[@]}"; do

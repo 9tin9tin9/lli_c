@@ -3,7 +3,7 @@ FSANFLAG = -fsanitize=address -fsanitize=alignment
 OPTFLAG = -g -O3
 STDFLAG = -std=c11
 CFLAGS = $(STDFLAG) $(FSANFLAG) $(OPTFLAG) -pipe
-FILE_NAMES = lex mem code op opdef
+FILE_NAMES = error lex mem code op opdef
 
 SRCDIR = src
 TARGETDIR = target

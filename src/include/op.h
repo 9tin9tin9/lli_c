@@ -27,13 +27,18 @@ typedef struct{
     };
 }Signal;
 #define Signal(type_, content_) ((Signal){type_, .type_ = content_})
-Error Signal_respond(Signal, Mem*, Code*, Hashmap);
+Error Signal_respond(Signal, Mem*, Code*);
 
 typedef Error (*OpFunc)(Vec, Mem*, Signal*);
 #define defOp(name) Error name(Vec, Mem*, Signal*)
 
-void init_op_table();
-Error exec(Mem*, Code, Signal*);
+void op_initOpTable();
+Error op_exec(Mem*, Code, Signal*);
+
+// Hashmap<Str, size_t>
+extern Hashmap opIdxTable;
+// Vec<OpFunc>
+extern Vec funcVec;
 
 // Extend Tok
 Error Tok_getValue(Tok, Mem, double*);

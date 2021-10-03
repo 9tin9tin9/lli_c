@@ -50,7 +50,7 @@ tokenize()
 {
     Vec toks = Vec(Tok);
     Str s = Str_fromLtl("A: -123.234234, $asd, \"asd\\\"asd\"");
-    REQUIRE(Tok_tokenize(&toks, s) == Ok);
+    REQUIRE(lex_tokenize(&toks, s) == Ok);
     REQUIRE(Vec_count(toks) == 4);
 
     REQUIRE(Vec_at(toks, 0, Tok)->tokType == Sym);

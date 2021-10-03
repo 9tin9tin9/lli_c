@@ -40,7 +40,7 @@ typedef struct {
 int Tok_eq(Tok, Tok);
 int HashIdx_eq(HashIdx left, HashIdx right);
 // Str will be MOVED
-int Tok_fromStr(Tok*, Str);
-Error Tok_tokenize(Vec* des, Str s);
+Error Tok_fromStr(Tok*, Str);
+Error lex_tokenize(Vec* des, Str s);
 
 #endif

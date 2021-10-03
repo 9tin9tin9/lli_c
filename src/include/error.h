@@ -22,12 +22,18 @@ typedef enum{
     // preprocess
     Error_UndefinedVar,
     Error_UndefinedLabel,
+    Error_UnknownOp,
 
     // runtime
     Error_InvalidMemAccess,
     Error_NotInteger,
     Error_NotPositiveInteger,
     Error_WrongArgType,
+    Error_CannotOpenFile,
+    Error_CannotReadFile,
 }Error;
+
+// void* -> Code*
+void Error_print(Error, void*, int);
 
 #endif

@@ -8,9 +8,9 @@
 typedef struct{
     Vec pmem;  // Vec<double>
     Vec nmem;  // Vec<double>  Starts at idx:1
-    Hashmap varLookUp;  // Hashmap<Str, size_t>  Store index of variable
+    Hashmap varLookUp;  // Hashmap<char*, size_t>  Store index of variable
     Vec var;  // Vec<long>  Store indices that var points to
-    Hashmap labelLookUp;  // Hashmap<Str, size_t>
+    Hashmap labelLookUp;  // Hashmap<char*, size_t>
     Vec label;  // Vec<long>  Store line number without empty lines
     Vec fd;  // Vec<bool>
 }Mem;
