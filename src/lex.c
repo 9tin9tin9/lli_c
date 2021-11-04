@@ -55,9 +55,6 @@ Tok_eq(Tok left, Tok right)
     case'0':case'1':case'2':case'3':case'4':\
     case'5':case'6':case'7':case'8':case'9':
 
-// this may be dangerous, but the memory will be freed... so I guess its ok?
-// FIXME: this IS dangerous, moving base pointer causes abort trap 6 when freeing this Str.
-// UPDATE: Fixed but not yet tested
 // end_: where null pointer places
 #define shrinkStr(s_, start_, end_) \
 { \
