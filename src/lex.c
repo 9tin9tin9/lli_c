@@ -66,6 +66,7 @@ Tok_eq(Tok left, Tok right)
     char* new = malloc(newSize); \
     free(s_.array); \
     strncpy(new, Str_at(s_, start_), newSize); \
+    s_.array = new; \
     s.size = newSize; \
 }
 
