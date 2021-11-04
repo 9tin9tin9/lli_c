@@ -26,9 +26,11 @@ typedef enum{
 
     // runtime
     Error_InvalidMemAccess,
+    Error_CannotWriteToNMem,
     Error_NotInteger,
     Error_NotPositiveInteger,
     Error_WrongArgType,
+    Error_WrongArgCount,
     Error_CannotOpenFile,
     Error_CannotReadFile,
 }Error;
