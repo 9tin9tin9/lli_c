@@ -25,7 +25,7 @@ build:
 
 run:
 	@make build
-	@./$(BINDIR)/main
+	@./$(BINDIR)/main $(f)
 
 src/main: $(OBJ)
 
