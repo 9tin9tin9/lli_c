@@ -56,12 +56,17 @@ Tok_eq(Tok left, Tok right)
     case'5':case'6':case'7':case'8':case'9':
 
 // this may be dangerous, but the memory will be freed... so I guess its ok?
+// FIXME: this IS dangerous, moving base pointer causes abort trap 6 when freeing this Str.
+// UPDATE: Fixed but not yet tested
 // end_: where null pointer places
 #define shrinkStr(s_, start_, end_) \
 { \
     *Str_at(s, end_) = '\0'; \
-    Str_raw(s_) = Str_at(s_, start_); \
-    s.size -= s.size - end_ + start_;\
+    size_t newSize = end_ - start_; \
+    char* new = malloc(newSize); \
+    free(s_.array); \
+    strncpy(new, Str_at(s_, start_), newSize); \
+    s.size = newSize; \
 }
 
 Error
@@ -154,6 +159,7 @@ eat_token(
         if (c == NULL || *c == 0){
             break;
         }
+
         if (*c == '#' && state != STRLTL){
             break;
 
