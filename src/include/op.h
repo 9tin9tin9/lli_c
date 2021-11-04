@@ -35,7 +35,7 @@ typedef Error (*OpFunc)(Vec, Mem*, Signal*);
 void op_initOpTable();
 Error op_exec(Mem*, Code, Signal*);
 
-// Hashmap<Str, size_t>
+// Hashmap<const char*, size_t>
 extern Hashmap opIdxTable;
 // Vec<OpFunc>
 extern Vec funcVec;

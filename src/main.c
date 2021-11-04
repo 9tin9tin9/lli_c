@@ -1,10 +1,14 @@
+// My Hashmap can't work with char[] and char*
+// As long as lli_c keeps using my Hashmap, lli_c is probably not going to work
+
 #include "include/op.h"
 #include <stdio.h>
 #include <limits.h>
 
 const int ERROR_MSG_LEVEL = 1;
 
-#define _findAndReplace(location, action) \
+// find symbol and then assign idex or update table
+#define _findAndUpdate(location, action) \
     tok = Vec_at(*toks, 1, Tok);  \
     idx = Hashmap_at(  \
             m->location,  \
@@ -30,16 +34,16 @@ createSymTable(size_t opcode, Mem* m, Code* c, Vec* toks)
         // lbl | alias
         case 21:
         case 22:
-            _findAndReplace(labelLookUp, Mem_label_add(m, Code_len(*c)));
+            _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(*c)));
         
         // var
         case 3:
-            _findAndReplace(varLookUp, Mem_var_add(m, 0));
+            _findAndUpdate(varLookUp, Mem_var_add(m, 0));
     }
     return Ok;
 }
 
-#undef _findAndReplace
+#undef _findAndUpdate
 
 Error
 preprocess(Mem* m, Code* c, Vec toks)
@@ -53,7 +57,7 @@ preprocess(Mem* m, Code* c, Vec toks)
     // guaranteed to be tokType == Sym
     size_t* opcode = Hashmap_at(
             opIdxTable, 
-            opTok->Sym.sym, 
+            opTok->Sym.sym.array,
             size_t
             );
     if (!opcode){
@@ -145,6 +149,8 @@ readFromFile(const char* fileName, Mem* m, Code* c)
     while(fgets(line, MAX_INPUT, fileptr)){
         Vec toks = Vec(Tok);
         // DON'T free
+        // remove trailing \n
+        line[strlen(line)-1] = 0;
         Str wrapper = (Str){strlen(line), line};
         r = lex_tokenize(&toks, wrapper);
         if (r) return r;

@@ -41,6 +41,7 @@ int Tok_eq(Tok, Tok);
 int HashIdx_eq(HashIdx left, HashIdx right);
 // Str will be MOVED
 Error Tok_fromStr(Tok*, Str);
+// Str: read only
 Error lex_tokenize(Vec* des, Str s);
 
 #endif

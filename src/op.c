@@ -2,8 +2,8 @@
 #include "include/opdef.h"
 
 #define addEntry(op) { \
-    Vec_push(&funcVec, op); \
-    Hashmap_insert(&opIdxTable, Str_fromLtl(#op), Vec_count(funcVec)-1); \
+    Vec_push(&funcVec, &op); \
+    Hashmap_insert(&opIdxTable, #op, Vec_count(funcVec)-1); \
 }
 
 Hashmap opIdxTable = Hashmap();
@@ -12,7 +12,7 @@ Vec funcVec = Vec(OpFunc);
 void
 op_initOpTable()
 {
-    addEntry(&nop);
+    addEntry(nop);
 }
 
 #undef addEntry
@@ -128,6 +128,9 @@ Tok_writeValue(Tok self, Mem* m, double d)
     long idx;
     Error r =  Tok_getLoc(self, m, &idx);
     if (r) return r;
+    if (idx < 0){
+        return Error_CannotWriteToNMem;
+    }
     r = Mem_mem_set(m, idx, d);
     return r;
 }
