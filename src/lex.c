@@ -63,9 +63,9 @@ Tok_eq(Tok left, Tok right)
 { \
     *Str_at(s, end_) = '\0'; \
     size_t newSize = end_ - start_; \
-    char* new = malloc(newSize); \
+    char* new = malloc(newSize+1); \
+    memcpy(new, Str_at(s_, start_), newSize+1); \
     free(s_.array); \
-    strncpy(new, Str_at(s_, start_), newSize); \
     s_.array = new; \
     s.size = newSize; \
 }
