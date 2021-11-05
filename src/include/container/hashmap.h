@@ -7,6 +7,10 @@
 #include <string.h>
 #include <stdbool.h>
 
+/* 
+ * key designed to be used on strings only
+ */
+
 /*
  * Public Types:
  *      Hashmap
@@ -48,38 +52,30 @@ typedef unsigned long (*Hashfunc)(const char*, size_t);
 #endif
 
 typedef struct{
-    void* key;
+    char* key;
     size_t key_s;
-    void* val;
-    size_t val_s;
+    size_t val;
 }Hashmap_Pair;
 
 static inline Hashmap_Pair
-_Hashmap_Pair(const void* key, size_t key_s, const void* val, size_t val_s)
+_Hashmap_Pair(const void* key, size_t key_s, size_t val)
 {
     Hashmap_Pair p = (Hashmap_Pair){
         malloc(key_s),
         key_s,
-        malloc(val_s),
-        val_s,
+        val,
     };
     memcpy(p.key, key, key_s);
-    memcpy(p.val, val, val_s);
     return p;
 }
 
 #define Hashmap_Pair(k, v) \
-    _Hashmap_Pair(\
-        (__typeof__(k)[]){(k)}, \
-        sizeof(__typeof__(k)),\
-        (__typeof__(v)[]){(v)}, \
-        sizeof(__typeof__(v)))
+    _Hashmap_Pair(k, strlen(k)+1, v)
 
 static inline void
 _Hashmap_Pair_del(Hashmap_Pair* p)
 {
     free(p->key);
-    free(p->val);
     memset(p, 0, sizeof(Hashmap_Pair));
 }
 
@@ -130,7 +126,7 @@ Hashmap_rehash(Hashmap* h, size_t growth_factor)
 }
 
 static inline size_t
-_Hashmap_get_idx(Hashmap h, const void* key, size_t key_s)
+_Hashmap_get_idx(Hashmap h, const char* key, size_t key_s)
 {
     return h.hashfunc(key, key_s) % h.cap;
 }
@@ -160,7 +156,7 @@ _Hashmap_remove(Hashmap* h, const void* key, size_t key_s)
 }
 
 #define Hashmap_remove(h, k)\
-    _Hashmap_remove(h, (__typeof__(k)[]){(k)}, sizeof(__typeof__(k)))
+    _Hashmap_remove(h, (k), strlen(k)+1)
 
 static inline bool
 _Hashmap_contains(Hashmap h, const void* key, size_t key_s)
@@ -173,21 +169,21 @@ _Hashmap_contains(Hashmap h, const void* key, size_t key_s)
 }
 
 #define Hashmap_contains(h, k)\
-    _Hashmap_contains(h, (__typeof__(k)[]){(k)}, sizeof(__typeof__(k)))
+    _Hashmap_contains(h, k, strlen(k)+1)
 
 static inline void*
 _Hashmap_at(Hashmap h, const void* key, size_t key_s)
 {
     if (h.array == NULL) return NULL;
-    Hashmap_Pair pair = h.array[_Hashmap_get_idx(h, key, key_s)];
-    if (pair.key_s == key_s && memcmp(pair.key, pair.key, key_s) == 0){
-        return pair.val;
+    Hashmap_Pair* pair = &h.array[_Hashmap_get_idx(h, key, key_s)];
+    if (pair->key_s == key_s && memcmp(pair->key, pair->key, key_s) == 0){
+        return &pair->val;
     }
     return NULL;
 }
 
 #define Hashmap_at(h, k, t)\
-    (t*)_Hashmap_at(h, (__typeof__(k)[]){(k)}, sizeof(__typeof__(k)))
+    (t*)_Hashmap_at(h, k, strlen(k)+1)
 
 #endif
 
