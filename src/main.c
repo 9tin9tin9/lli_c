@@ -1,6 +1,3 @@
-// My Hashmap can't work with char[] and char*
-// As long as lli_c keeps using my Hashmap, lli_c is probably not going to work
-
 #include "include/op.h"
 #include <stdio.h>
 #include <limits.h>

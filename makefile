@@ -3,15 +3,13 @@ FSANFLAG = -fsanitize=address -fsanitize=alignment
 OPTFLAG = -g -O3
 STDFLAG = -std=c11
 CFLAGS = $(STDFLAG) $(FSANFLAG) $(OPTFLAG) -pipe
-FILE_NAMES = error lex mem code op opdef
+FILE_NAMES = error lex mem code op opdef_nop opdef_mem
 
 SRCDIR = src
 TARGETDIR = target
 OBJDIR = $(TARGETDIR)/obj
 BINDIR = $(TARGETDIR)/bin
 OBJ = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(FILE_NAMES)))
-HEADER_DIR = $(SRCDIR)/include
-HEADER = $(addsuffix .h,$(addprefix $(HEADER_DIR)/,$(FILE_NAMES)))
 
 build:
 	@if [[ ! -e $(TARGETDIR) ]]; then mkdir $(TARGETDIR); echo created \'$(TARGETDIR)\' directory; fi
@@ -24,14 +22,13 @@ build:
 	@mv src/main.dSYM $(BINDIR)
 
 run:
-	@make build
 	@./$(BINDIR)/main $(f)
 
 src/main: $(OBJ)
 
 all: $(OBJ)
 
-$(OBJ): $(OBJDIR)/%.o: $(SRCDIR)/%.c $(HEADER) makefile
+$(OBJ): $(OBJDIR)/%.o: $(SRCDIR)/%.c makefile
 	$(CC) -c $(CFLAGS) $< -o $@
 
 .PHONY: clean

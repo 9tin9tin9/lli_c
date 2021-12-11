@@ -13,6 +13,7 @@ void
 op_initOpTable()
 {
     addEntry(nop);
+    addEntry(mov);
 }
 
 #undef addEntry
@@ -126,7 +127,7 @@ Error
 Tok_writeValue(Tok self, Mem* m, double d)
 {
     long idx;
-    Error r =  Tok_getLoc(self, m, &idx);
+    Error r = Tok_getLoc(self, m, &idx);
     if (r) return r;
     if (idx < 0){
         return Error_CannotWriteToNMem;

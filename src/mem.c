@@ -4,7 +4,7 @@ Mem
 Mem_new()
 {
     return (Mem){
-        .pmem = Vec(double),
+        .pmem = Vec_from(double, 0.0),
         .nmem = Vec_from(double, 0.0),
         .varLookUp = Hashmap(),
         .var = Vec(long),

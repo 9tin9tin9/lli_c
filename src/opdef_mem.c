@@ -1,11 +1,11 @@
-#include "../include/opdef.h"
+#include "include/opdef.h"
 
 Error
 mov(Vec v, Mem* m, Signal* s)
 {
     argcGuard(v, 2);
-    Tok* des = Vec_at(v, 0, Tok);
-    Tok* src = Vec_at(v, 1, Tok);
+    Tok* des = Vec_at(v, 1, Tok);
+    Tok* src = Vec_at(v, 2, Tok);
     double val;
     Error r = Tok_getValue(*src, *m, &val);
     if (r) return r;
@@ -18,15 +18,15 @@ cpy(Vec v, Mem* m, Signal* s)
 {
     argcGuard(v, 3);
     long des;
-    Error r = Tok_getLoc(*Vec_at(v, 0, Tok), m, &des);
+    Error r = Tok_getLoc(*Vec_at(v, 1, Tok), m, &des);
     if (r) return r;
 
     long src;
-    r = Tok_getLoc(*Vec_at(v, 1, Tok), m, &src);
+    r = Tok_getLoc(*Vec_at(v, 2, Tok), m, &src);
     if (r) return r;
 
     size_t size;
-    r = Tok_getUint(*Vec_at(v, 2, Tok), *m, &size);
+    r = Tok_getUint(*Vec_at(v, 3, Tok), *m, &size);
     if (r) return r;
 
     double val;
