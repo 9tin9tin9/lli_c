@@ -14,6 +14,8 @@ op_initOpTable()
 {
     addEntry(nop);
     addEntry(mov);
+    addEntry(cpy);
+    addEntry(allc);
 }
 
 #undef addEntry
@@ -26,7 +28,11 @@ op_exec(Mem* m, Code c, Signal* result)
     Line* l = Code_curr(c);
     // TokType should have been checked during preprocessing already
     size_t opcode = l->opcode;
-    return (*Vec_at(funcVec, opcode, OpFunc))(l->toks, m, result);
+    Vec args = (Vec){
+        .elem_size = l->toks.elem_size,
+        .size = l->toks.size-1,
+        .array = l->toks.array+l->toks.elem_size};
+    return (*Vec_at(funcVec, opcode, OpFunc))(args, m, result);
 }
 
 Error

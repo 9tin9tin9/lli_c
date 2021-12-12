@@ -35,7 +35,7 @@
 ```bash
 # memory management
 mov: des(WPtr), src(Value)  # assignment, read value
-cpy: des(WPtr), src(Ptr), size(Value  # memcpy. When src = Ltl, a new ltl is created and its idx is used as src idx
+cpy: des(WPtr), src(Ptr), size(Value)  # memcpy. When src = Ltl, a new ltl is created and its idx is used as src idx
 var: name(Sym), idx(Ptr)  # Creates or update $name with index = idx
 incr: var(Var), num(Value)  # Used to iterate->read/write pmem, potentially can be used to do stack operations
 decr: var(Var), num(Value)  # Used to iterate->read nmem
