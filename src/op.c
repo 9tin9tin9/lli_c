@@ -13,8 +13,12 @@ void
 op_initOpTable()
 {
     addEntry(nop);
+
     addEntry(mov);
     addEntry(cpy);
+    addEntry(var);
+    addEntry(incr);
+    addEntry(decr);
     addEntry(allc);
 }
 

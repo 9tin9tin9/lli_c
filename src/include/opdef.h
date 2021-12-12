@@ -13,6 +13,9 @@ defOp(nop);
 
 defOp(mov);
 defOp(cpy);
+defOp(var);
+defOp(incr);
+defOp(decr);
 defOp(allc);
 
 #endif

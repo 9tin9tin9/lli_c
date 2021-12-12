@@ -66,7 +66,7 @@ var(Vec v, Mem* m, Signal* s)
     size_t incrVal; \
     Error r = Tok_getSym(*Vec_at(v_, 0, Tok), &var); \
     if (r) return r; \
-    r = Tok_getUint(*Vec_at(v_, 0, Tok), *m_, &incrVal); \
+    r = Tok_getUint(*Vec_at(v_, 1, Tok), *m_, &incrVal); \
     long varIdx; \
     r = Mem_var_find(*m_, var, &varIdx); \
     if (r) return r; \

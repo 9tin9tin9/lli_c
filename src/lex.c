@@ -222,7 +222,6 @@ eat_token(
         Str_push(&current, *c);
     }
 
-    eat_Token_end:;
            // `current` moved to Tok_fromStr
     return Tok_fromStr(tok, current);
 }
@@ -232,7 +231,7 @@ eat_operator(Tok* tok, size_t* ptr, Str s)
 {
     Error r = eat_token(tok, s, ptr, ':', ',', 0);
     if (r) return r;
-    if (tok->tokType != Sym) 
+    if (tok->tokType != Sym && tok->tokType != Eof) 
         return Error_WrongTokTypeForOp;
     return Ok;
 }
@@ -258,7 +257,7 @@ lex_tokenize(Vec* des, Str s)
             break;
 
         case Eof:
-            return 0;
+            return Ok;
 
         default:
             // Expects symbol as operator
