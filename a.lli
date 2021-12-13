@@ -1,4 +1,1 @@
-allc: 15
-var: A, [-1]
-decr: A, 1
-mov: $A, 10
+div: 10, 11

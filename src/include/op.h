@@ -30,7 +30,6 @@ typedef struct{
 Error Signal_respond(Signal, Mem*, Code*);
 
 typedef Error (*OpFunc)(Vec, Mem*, Signal*);
-#define defOp(name) Error name(Vec, Mem*, Signal*)
 
 void op_initOpTable();
 Error op_exec(Mem*, Code, Signal*);

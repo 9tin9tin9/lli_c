@@ -14,12 +14,23 @@ op_initOpTable()
 {
     addEntry(nop);
 
+    // 1
     addEntry(mov);
     addEntry(cpy);
     addEntry(var);
     addEntry(incr);
     addEntry(decr);
     addEntry(allc);
+
+    // 7
+    addEntry(add);
+    addEntry(sub);
+    addEntry(mul);
+    { // div is allready declared in stdlib
+        Vec_push(&funcVec, &div_);
+        Hashmap_insert(&opIdxTable, "div", Vec_count(funcVec)-1);
+    }
+    addEntry(mod);
 }
 
 #undef addEntry

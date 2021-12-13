@@ -60,7 +60,7 @@ var(Vec v, Mem* m, Signal* s)
     return Ok;
 }
 
-#define mutVarIdx(v_, m_, a_) \
+#define mutVarIdx(v_, m_, s_, a_) \
     argcGuard(v_, 2); \
     HashIdx var; \
     size_t incrVal; \
@@ -72,19 +72,19 @@ var(Vec v, Mem* m, Signal* s)
     if (r) return r; \
     a_(&varIdx, incrVal); \
     Mem_var_set(m_, var.idx, varIdx); \
-    *s = Signal(None, 0); \
+    *s_ = Signal(None, 0); \
     return Ok;
 
 Error
 incr(Vec v, Mem* m, Signal* s)
 {
-    mutVarIdx(v, m, idxIncr);
+    mutVarIdx(v, m, s, idxIncr);
 }
 
 Error
 decr(Vec v, Mem* m, Signal* s)
 {
-    mutVarIdx(v, m, idxDecr);
+    mutVarIdx(v, m, s, idxDecr);
 }
 
 Error

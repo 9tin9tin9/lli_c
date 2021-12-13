@@ -42,6 +42,7 @@ Error_print(Error r, void* _c, int level)
         error_case(Error_WrongArgCount);
         error_case(Error_CannotOpenFile);
         error_case(Error_CannotReadFile);
+        error_case(Error_ModOperandNotInteger);
 
         default:
             break;

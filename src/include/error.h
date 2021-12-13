@@ -33,6 +33,7 @@ typedef enum{
     Error_WrongArgCount,
     Error_CannotOpenFile,
     Error_CannotReadFile,
+    Error_ModOperandNotInteger,
 }Error;
 
 // void* -> Code*
