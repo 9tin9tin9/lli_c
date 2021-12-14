@@ -26,4 +26,9 @@ defOp(mul);
 defOp(div_);
 defOp(mod);
 
+defOp(eq);
+defOp(ne);
+defOp(gt);
+defOp(lt);
+
 #endif

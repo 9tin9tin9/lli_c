@@ -31,6 +31,12 @@ op_initOpTable()
         Hashmap_insert(&opIdxTable, "div", Vec_count(funcVec)-1);
     }
     addEntry(mod);
+
+    // 12
+    addEntry(eq);
+    addEntry(ne);
+    addEntry(gt);
+    addEntry(lt);
 }
 
 #undef addEntry
