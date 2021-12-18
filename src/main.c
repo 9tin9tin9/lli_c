@@ -4,7 +4,7 @@
 
 const int ERROR_MSG_LEVEL = 1;
 
-// find symbol and then assign idex or update table
+// find symbol and then assign index or update table
 #define _findAndUpdate(location, action) \
     tok = Vec_at(*toks, 1, Tok);  \
     idx = Hashmap_at(  \
@@ -60,6 +60,7 @@ preprocess(Mem* m, Code* c, Vec toks)
     if (!opcode){
         return Error_UnknownOp;
     }
+    opTok->Sym.idx = *opcode;
 
     Error r = createSymTable(*opcode, m, c, &toks);
     if (r) return r;
