@@ -11,7 +11,7 @@ typedef struct{
     Hashmap varLookUp;  // Hashmap<char*, size_t>  Store index of variable
     Vec var;  // Vec<long>  Store indices that var points to
     Hashmap labelLookUp;  // Hashmap<char*, size_t>
-    Vec label;  // Vec<long>  Store line number without empty lines
+    Vec label;  // Vec<size_t>  Store line number without empty lines
     Vec fd;  // Vec<bool>
 }Mem;
 
@@ -39,10 +39,10 @@ void Mem_var_set(Mem*, size_t, long);
 Error Mem_var_find(Mem, HashIdx, long*);
 
 // returns the index of inserted label
-size_t Mem_label_add(Mem*, long);
+size_t Mem_label_add(Mem*, size_t);
 // assume index is always valid
-void Mem_label_set(Mem*, size_t, long);
-Error Mem_label_find(Mem, HashIdx, long*);
+void Mem_label_set(Mem*, size_t, size_t);
+Error Mem_label_find(Mem, HashIdx, size_t*);
 
 void idxIncr(long*, long);
 void idxDecr(long*, long);

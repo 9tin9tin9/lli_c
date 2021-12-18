@@ -9,7 +9,7 @@ Mem_new()
         .varLookUp = Hashmap(),
         .var = Vec(long),
         .labelLookUp = Hashmap(),
-        .label = Vec(long),
+        .label = Vec(size_t),
         .fd = Vec(bool),
     };
 }
@@ -123,22 +123,22 @@ Mem_var_find(Mem self, HashIdx hi, long* des)
 }
 
 size_t
-Mem_label_add(Mem* self, long idx)
+Mem_label_add(Mem* self, size_t idx)
 {
     Vec_push(&self->label, idx);
     return Vec_count(self->label) - 1;
 }
 
 void
-Mem_label_set(Mem* self, size_t i, long idx)
+Mem_label_set(Mem* self, size_t i, size_t idx)
 {
-    *Vec_at(self->label, i, long) = idx;
+    *Vec_at(self->label, i, size_t) = idx;
 }
 
 Error
-Mem_label_find(Mem self, HashIdx hi, long* des)
+Mem_label_find(Mem self, HashIdx hi, size_t* des)
 {
-    long* elem = Vec_at(self.label, hi.idx, long);
+    size_t* elem = Vec_at(self.label, hi.idx, size_t);
     if (!elem)
         return Error_UndefinedLabel;
     *des = *elem;
