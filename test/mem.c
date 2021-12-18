@@ -9,10 +9,10 @@ pmem_at()
     Mem m = Mem_new();
     Vec_push(&m.pmem, 10.0);
     double d;
-    Error r = Mem_pmem_at(m, 0, &d);
+    Error r = Mem_pmem_at(m, 1, &d);
     REQUIRE(r == Ok);
     REQUIRE(d == 10.0);
-    r = Mem_pmem_at(m, 1, &d);
+    r = Mem_pmem_at(m, 2, &d);
     REQUIRE(r == Error_InvalidMemAccess);
     REQUIRE(d == 10.0);
 }
@@ -21,11 +21,11 @@ void
 pmem_set()
 {
     Mem m = Mem_new();
-    Error r = Mem_pmem_set(&m, 0, 10.0);
+    Error r = Mem_pmem_set(&m, 1, 10.0);
     REQUIRE(r == Error_InvalidMemAccess);
     Vec_push(&m.pmem, 0.0);
-    r = Mem_pmem_set(&m, 0, 10.0);
-    REQUIRE(*Vec_at(m.pmem, 0, double) == 10.0);
+    r = Mem_pmem_set(&m, 1, 10.0);
+    REQUIRE(*Vec_at(m.pmem, 1, double) == 10.0);
 }
 
 void
