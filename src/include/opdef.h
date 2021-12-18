@@ -35,4 +35,9 @@ defOp(and);
 defOp(or);
 defOp(not);
 
+defOp(jmp);
+defOp(jc);
+defOp(lbl);
+defOp(als);
+
 #endif

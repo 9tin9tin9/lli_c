@@ -1,0 +1,11 @@
+allc: 10
+
+lbl: startLoop
+add: [1], 1
+mov: [1], [0]
+eq: [1], 10
+jc: [0], exitLoop
+jmp: startLoop
+
+lbl: exitLoop
+mov: [0], [1]

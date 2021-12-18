@@ -9,7 +9,7 @@ typedef struct{
 }Line;
 
 typedef struct {
-    Vec lines; // Vec<Vec<Tok>>
+    Vec lines; // Vec<Line>
     size_t ptr;
 }Code;
 

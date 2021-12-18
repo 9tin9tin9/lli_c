@@ -64,7 +64,7 @@ not: bool(Value)  # !
 jmp: lbl(Sym)  # unconditional jmp
 jc: cond(Value), lbl(Sym)  # jump if cond is true
 lbl: lbl(Sym)  # set label.
-als: als(Sym) lbl(Sym)  # set alias. als = lbl
+als: als(Sym) lbl(Sym)  # set alias during runtime, act as function pointer. als = lbl
 
 # sys
 exit: exit_code(Value)

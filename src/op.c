@@ -1,5 +1,6 @@
 #include "include/op.h"
 #include "include/opdef.h"
+#include <stdio.h>
 
 #define addEntry(op) { \
     Vec_push(&funcVec, &op); \
@@ -8,6 +9,18 @@
 
 Hashmap opIdxTable = Hashmap();
 Vec funcVec = Vec(OpFunc);
+
+Error
+print_num(Vec v, Mem* m, Signal* s)
+{
+    argcGuard(v, 1);
+    double value;
+    Error r = Tok_getValue(*Vec_at(v, 0, Tok), *m, &value);
+    if (r) return r;
+    printf("%f\n", value);
+    *s = Signal(None, 0);
+    return Ok;
+}
 
 void
 op_initOpTable()
@@ -42,6 +55,14 @@ op_initOpTable()
     addEntry(and);
     addEntry(or);
     addEntry(not);
+
+    // 19
+    addEntry(jmp);
+    addEntry(jc);
+    addEntry(lbl);
+    addEntry(als);
+
+    addEntry(print_num);
 }
 
 #undef addEntry
@@ -66,6 +87,15 @@ Signal_respond(Signal self, Mem* m, Code* c)
 {
     switch (self.type) {
         case None:
+            break;
+        case Jmp:
+            Code_ptr_set(c, self.Jmp);
+            return Ok;
+        case SetLbl:
+            Mem_label_set(m, self.SetLbl, Code_ptr(*c)+1);
+            break;
+        case SetAls:
+            Mem_label_set(m, self.SetAls.alias, self.SetAls.loc);
             break;
     }
 

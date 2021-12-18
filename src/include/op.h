@@ -26,7 +26,7 @@ typedef struct{
         Str Src;
     };
 }Signal;
-#define Signal(type_, content_) ((Signal){type_, .type_ = content_})
+#define Signal(type_, ...) ((Signal){type_, .type_ = __VA_ARGS__})
 Error Signal_respond(Signal, Mem*, Code*);
 
 typedef Error (*OpFunc)(Vec, Mem*, Signal*);
