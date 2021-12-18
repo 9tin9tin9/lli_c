@@ -31,4 +31,8 @@ defOp(ne);
 defOp(gt);
 defOp(lt);
 
+defOp(and);
+defOp(or);
+defOp(not);
+
 #endif

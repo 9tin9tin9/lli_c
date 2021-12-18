@@ -37,6 +37,11 @@ op_initOpTable()
     addEntry(ne);
     addEntry(gt);
     addEntry(lt);
+
+    // 16
+    addEntry(and);
+    addEntry(or);
+    addEntry(not);
 }
 
 #undef addEntry
