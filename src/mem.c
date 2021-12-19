@@ -166,8 +166,7 @@ Mem_readLtl(Mem self, long idx, Str* des)
     int zeroCount = 0;
     while(1){
         double c;
-        Error r = Mem_mem_at(self, idx, &c);
-        if (r) return r;
+        try(Mem_mem_at(self, idx, &c));
         if (c == 0.0){
             if (++zeroCount == 2){
                 return Ok;

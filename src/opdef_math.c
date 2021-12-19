@@ -4,16 +4,14 @@ Error
 math_parseArg(Vec v, Mem m, double* left, double* right)
 {
     argcGuard(v, 2);
-    Error r = Tok_getValue(*Vec_at(v, 0, Tok), m, left);
-    if (r) return r;
-    r = Tok_getValue(*Vec_at(v, 1, Tok), m, right);
-    return r;
+    try(Tok_getValue(*Vec_at(v, 0, Tok), m, left));
+    try(Tok_getValue(*Vec_at(v, 1, Tok), m, right));
+    return Ok;
 }
 
 #define math(op_, v_, m_, s_) \
     double left, right; \
-    Error r = math_parseArg(v_, *m_, &left, &right); \
-    if (r) return r; \
+    try(math_parseArg(v_, *m_, &left, &right)); \
     double result = left op_ right; \
     Mem_mem_set(m_, 0, result); \
     *s_ = Signal(None, 0); \
@@ -47,8 +45,7 @@ Error
 mod(Vec v, Mem* m, Signal* s)
 {
     double left, right;
-    Error r = math_parseArg(v, *m, &left, &right);
-    if (r) return r;
+    try(math_parseArg(v, *m, &left, &right));
     if (left != (int)left || right != (int)right)
         return Error_ModOperandNotInteger;
     double result = (int)left % (int)right;

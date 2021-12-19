@@ -62,8 +62,7 @@ preprocess(Mem* m, Code* c, Vec toks)
     }
     opTok->Sym.idx = *opcode;
 
-    Error r = createSymTable(*opcode, m, c, &toks);
-    if (r) return r;
+    try(createSymTable(*opcode, m, c, &toks));
 
     Code_push(c, toks, *opcode);
     return Ok;
@@ -150,11 +149,9 @@ readFromFile(const char* fileName, Mem* m, Code* c)
         // remove trailing \n
         line[strlen(line)-1] = 0;
         Str wrapper = (Str){strlen(line), line};
-        r = lex_tokenize(&toks, wrapper);
-        if (r) return r;
+        try(lex_tokenize(&toks, wrapper));
 
-        r = preprocess(m, c, toks);
-        if (r) return r;
+        try(preprocess(m, c, toks));
     }
 
     if (ferror(fileptr)) {

@@ -20,8 +20,7 @@ print_num(Vec v, Mem* m, Signal* s)
 {
     argcGuard(v, 1);
     double value;
-    Error r = Tok_getValue(*Vec_at(v, 0, Tok), *m, &value);
-    if (r) return r;
+    try(Tok_getValue(*Vec_at(v, 0, Tok), *m, &value));
     printf("%f\n", value);
     *s = Signal(None, 0);
     return Ok;
@@ -107,9 +106,8 @@ Signal_respond(Signal self, Mem* m, Code* c)
         case SetAls:
             Mem_label_set(m, self.SetAls.alias, self.SetAls.loc);
             break;
-        case Src:
-            r = readFromFile(self.Src.array, m, c);
-            if (r) return r;
+        // case Src:
+        //     try(readFromFile(self.Src.array, m, c));
     }
 
     Code_ptr_incr(c, 1);
@@ -132,17 +130,14 @@ Tok_getValue(Tok self, Mem m, double* d)
         case Var:
             // Find where Var points to
             ;long i;
-            Error r = Mem_var_find(m, self.Var, &i);
-            if (r) return r;
+            try(Mem_var_find(m, self.Var, &i));
             return Mem_mem_at(m, i, d);
 
         case VarIdx:
             // Read the value pointed by Var, use it as pointer to lookup value
             ;double value;
-            r = Mem_var_find(m, self.VarIdx, &i);
-            if (r) return r;
-            r = Mem_mem_at(m, i, &value);
-            if (r) return r;
+            try(Mem_var_find(m, self.VarIdx, &i));
+            try(Mem_mem_at(m, i, &value));
             if (value != (long)value){
                 return Error_NotInteger;
             }
@@ -157,8 +152,7 @@ Error
 Tok_getUint(Tok self, Mem m, size_t* i)
 {
     double f;
-    Error r = Tok_getValue(self, m, &f);
-    if (r) return r;
+    try(Tok_getValue(self, m, &f));
     if (f != (unsigned long)f){
         return Error_NotPositiveInteger;
     }
@@ -170,8 +164,7 @@ Error
 Tok_getInt(Tok self, Mem m, long *i)
 {
     double f;
-    Error r = Tok_getValue(self, m, &f);
-    if (r) return r;
+    try(Tok_getValue(self, m, &f));
     if (f != (long)f){
         return Error_NotInteger;
     }
@@ -192,10 +185,9 @@ Tok_getLoc(Tok self, Mem* m, long* l)
 
         case VarIdx:
             ;long idx;
-            Error r = Mem_var_find(*m, self.VarIdx, &idx);
-            if (r) return r;
+            try(Mem_var_find(*m, self.VarIdx, &idx));
             double value;
-            r = Mem_mem_at(*m, idx, &value);
+            try(Mem_mem_at(*m, idx, &value));
             if (value != (long)value){
                 return Error_NotInteger;
             }
@@ -215,13 +207,12 @@ Error
 Tok_writeValue(Tok self, Mem* m, double d)
 {
     long idx;
-    Error r = Tok_getLoc(self, m, &idx);
-    if (r) return r;
+    try(Tok_getLoc(self, m, &idx));
     if (idx < 0){
         return Error_CannotWriteToNMem;
     }
-    r = Mem_mem_set(m, idx, d);
-    return r;
+    try(Mem_mem_set(m, idx, d));
+    return Ok;
 }
 
 Error

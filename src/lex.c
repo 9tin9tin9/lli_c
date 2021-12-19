@@ -229,8 +229,7 @@ eat_token(
 Error
 eat_operator(Tok* tok, size_t* ptr, Str s)
 {
-    Error r = eat_token(tok, s, ptr, ':', ',', 0);
-    if (r) return r;
+    try(eat_token(tok, s, ptr, ':', ',', 0));
     if (tok->tokType != Sym && tok->tokType != Eof) 
         return Error_WrongTokTypeForOp;
     return Ok;
@@ -248,9 +247,7 @@ lex_tokenize(Vec* des, Str s)
     // points to the idx that have read
     size_t ptr = 0;
     Tok tok;
-    Error result = eat_operator(&tok, &ptr, s);
-    // if error
-    if (result) return result;
+    try(eat_operator(&tok, &ptr, s));
     switch (tok.tokType) {
         case Sym:
             Vec_push(des, tok);
@@ -265,9 +262,7 @@ lex_tokenize(Vec* des, Str s)
             return 1;
     }
     while(1){
-        int result = eat_args(&tok, &ptr, s);
-        // if error
-        if (result) return result;
+        try(eat_args(&tok, &ptr, s));
         if (tok.tokType == Eof){
             return 0;
         }
