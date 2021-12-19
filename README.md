@@ -69,10 +69,9 @@ als: als(Sym) lbl(Sym)  # set alias during runtime, act as function pointer. als
 # sys
 exit: exit_code(Value)
 fork: ???
-# for read and write, [0] set to bytes read or wrote
-read: fd(Value), ptr(WPtr), size(Value)
-write: fd(Value), ptr(Ptr), size(Value)
-open: name(Ptr | Sym), option(Value)  # [0] sets to fd
+read: fd(Value), ptr(WPtr), size(Value)  # appends trailing \0. [0] set to bytes written to mem
+write: fd(Value), ptr(Ptr), size(Value)  # read and write ASCIIs. [0] set to bytes written to stream
+open: name(Ptr | Sym), option(Value)  # [0] sets to fd. Files are opened in text mode
 close: fd(Value)
 
 # extra

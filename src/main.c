@@ -196,9 +196,5 @@ int main(int argc, char** argv){
     exitIfError(&c);
     run(&m, &c);
 
-    double f;
-    Mem_mem_at(m, 0, &f);
-    printf("%f\n", f);
-
     return 0;
 }

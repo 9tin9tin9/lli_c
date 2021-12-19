@@ -1,8 +1,11 @@
 #include "include/mem.h"
+#include <limits.h>
 
 Mem
 Mem_new()
 {
+    bool fd[1024] = { false };
+    fd[0] = fd[1] = fd[2] = true;
     return (Mem){
         .pmem = Vec_from(double, 0.0),
         .nmem = Vec_from(double, 0.0),
@@ -10,7 +13,7 @@ Mem_new()
         .var = Vec(long),
         .labelLookUp = Hashmap(),
         .label = Vec(size_t),
-        .fd = Vec(bool),
+        .fd = _Vec_from(1024, sizeof(bool), fd),
     };
 }
 

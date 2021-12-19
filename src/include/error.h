@@ -34,6 +34,10 @@ typedef enum{
     Error_CannotOpenFile,
     Error_CannotReadFile,
     Error_ModOperandNotInteger,
+    Error_BadFileDescriptor,
+    Error_IoError,
+    Error_InvalidOpenOption,
+    Error_ExceedOpenLimit,
 }Error;
 
 // void* -> Code*

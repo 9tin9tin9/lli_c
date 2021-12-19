@@ -15,6 +15,7 @@ Error_print(Error r, void* _c, int level)
     // cast type
     Code* c = _c;
 
+    eprintf("at line %zu: ", Code_ptr(*c)+1);
     switch (r) {
         error_case(Error_WrongTokTypeForOp);
 
@@ -43,6 +44,10 @@ Error_print(Error r, void* _c, int level)
         error_case(Error_CannotOpenFile);
         error_case(Error_CannotReadFile);
         error_case(Error_ModOperandNotInteger);
+        error_case(Error_BadFileDescriptor);
+        error_case(Error_IoError);
+        error_case(Error_InvalidOpenOption);
+        error_case(Error_ExceedOpenLimit);
 
         default:
             break;

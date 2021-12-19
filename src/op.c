@@ -7,6 +7,11 @@
     Hashmap_insert(&opIdxTable, #op, Vec_count(funcVec)-1); \
 }
 
+#define addEntryAlternate(op) { \
+    Vec_push(&funcVec, &op##_); \
+    Hashmap_insert(&opIdxTable, #op, Vec_count(funcVec)-1); \
+}
+
 Hashmap opIdxTable = Hashmap();
 Vec funcVec = Vec(OpFunc);
 
@@ -39,10 +44,7 @@ op_initOpTable()
     addEntry(add);
     addEntry(sub);
     addEntry(mul);
-    { // div is allready declared in stdlib
-        Vec_push(&funcVec, &div_);
-        Hashmap_insert(&opIdxTable, "div", Vec_count(funcVec)-1);
-    }
+    addEntryAlternate(div);
     addEntry(mod);
 
     // 12
@@ -61,6 +63,13 @@ op_initOpTable()
     addEntry(jc);
     addEntry(lbl);
     addEntry(als);
+
+    // 23
+    addEntryAlternate(exit);
+    addEntryAlternate(open);
+    addEntryAlternate(close);
+    addEntryAlternate(read);
+    addEntryAlternate(write);
 
     addEntry(print_num);
 }
@@ -85,6 +94,7 @@ op_exec(Mem* m, Code c, Signal* result)
 Error
 Signal_respond(Signal self, Mem* m, Code* c)
 {
+    Error r;
     switch (self.type) {
         case None:
             break;
@@ -97,6 +107,9 @@ Signal_respond(Signal self, Mem* m, Code* c)
         case SetAls:
             Mem_label_set(m, self.SetAls.alias, self.SetAls.loc);
             break;
+        case Src:
+            r = readFromFile(self.Src.array, m, c);
+            if (r) return r;
     }
 
     Code_ptr_incr(c, 1);
@@ -148,6 +161,19 @@ Tok_getUint(Tok self, Mem m, size_t* i)
     if (r) return r;
     if (f != (unsigned long)f){
         return Error_NotPositiveInteger;
+    }
+    *i = (size_t)f;
+    return Ok;
+}
+
+Error
+Tok_getInt(Tok self, Mem m, long *i)
+{
+    double f;
+    Error r = Tok_getValue(self, m, &f);
+    if (r) return r;
+    if (f != (long)f){
+        return Error_NotInteger;
     }
     *i = (long)f;
     return Ok;

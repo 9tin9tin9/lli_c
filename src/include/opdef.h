@@ -40,4 +40,10 @@ defOp(jc);
 defOp(lbl);
 defOp(als);
 
+defOp(exit_);
+defOp(open_);
+defOp(close_);
+defOp(read_);
+defOp(write_);
+
 #endif

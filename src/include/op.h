@@ -42,6 +42,7 @@ extern Vec funcVec;
 // Extend Tok
 Error Tok_getValue(Tok, Mem, double*);
 Error Tok_getUint(Tok, Mem, size_t*);
+Error Tok_getInt(Tok, Mem, long*);
 Error Tok_getLoc(Tok, Mem*, long*);
 Error Tok_writeValue(Tok, Mem*, double);
 Error Tok_createLtl(Tok, Mem*, long*);
