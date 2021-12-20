@@ -1,11 +1,11 @@
 #include "include/opdef.h"
 
 Error
-cmp_parseArg(Vec v, Mem* m, double* left, double* right)
+cmp_parseArg(const Vec* v, Mem* m, double* left, double* right)
 {
     argcGuard(v, 2);
-    try(Tok_getValue(*Vec_at(v, 0, Tok), *m, left));
-    return Tok_getValue(*Vec_at(v, 1, Tok), *m, right);
+    try(Tok_getValue(Vec_at(v, 0, Tok), m, left));
+    return Tok_getValue(Vec_at(v, 1, Tok), m, right);
 }
 
 #define cmp(op_, v_, m_, s_) \
@@ -17,25 +17,25 @@ cmp_parseArg(Vec v, Mem* m, double* left, double* right)
     return Ok;
 
 Error
-eq(Vec v, Mem* m, Signal* s)
+eq(const Vec* v, Mem* m, Signal* s)
 {
     cmp(==, v, m, s);
 }
 
 Error
-ne(Vec v, Mem* m, Signal* s)
+ne(const Vec* v, Mem* m, Signal* s)
 {
     cmp(!=, v, m, s);
 }
 
 Error
-gt(Vec v, Mem* m, Signal* s)
+gt(const Vec* v, Mem* m, Signal* s)
 {
     cmp(>, v, m, s);
 }
 
 Error
-lt(Vec v, Mem* m, Signal* s)
+lt(const Vec* v, Mem* m, Signal* s)
 {
     cmp(<, v, m, s);
 }

@@ -26,34 +26,34 @@ Str_fromPtr(const char* s, size_t len)
 }
 
 static inline Str
-Str_copy(Str s)
+Str_copy(const Str* s)
 {
-    return Str_fromPtr(s.array, s.size);
+    return Str_fromPtr(s->array, s->size);
 }
 
 // strlen
-#define Str_len(s) ((s).size-1)
+#define Str_len(s) ((s)->size-1)
 // array size
-#define Str_count(s) ((s).size)
+#define Str_count(s) ((s)->size)
 
 // return NULL if out of range
 static inline char*
-Str_at(Str s, size_t idx)
+Str_at(const Str* s, size_t idx)
 {
-    if (idx >= s.size) return NULL;
-    return s.array + idx;
+    if (idx >= s->size) return NULL;
+    return s->array + idx;
 }
 
-#define Str_raw(s) ((s).array)
+#define Str_raw(s) ((s)->array)
 
-#define Str_front(s) (*(s).array)
+#define Str_front(s) (*(s)->array)
 
 // character before nul
 static inline short
-Str_back(Str s)
+Str_back(const Str* s)
 {
-    if (s.size <= 1) return -1;
-    return s.array[s.size-2];
+    if (s->size <= 1) return -1;
+    return s->array[s->size-2];
 }
 
 static inline void

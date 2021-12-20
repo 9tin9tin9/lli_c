@@ -15,7 +15,7 @@ Error_print(Error r, void* _c, int level)
     // cast type
     Code* c = _c;
 
-    eprintf("at line %zu: ", Code_ptr(*c)+1);
+    eprintf("at line %zu: ", Code_ptr(c)+1);
     switch (r) {
         error_case(Error_WrongTokTypeForOp);
 

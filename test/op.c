@@ -12,9 +12,9 @@ passLexAndExec()
     Signal s;
 
     op_initOpTable();
-    Code_push(&c, line, 0);
+    Code_push(&c, &line, 0);
 
-    Error r = op_exec(&m, c, &s);
+    Error r = op_exec(&m, &c, &s);
 
     REQUIRE(r == Ok);
     REQUIRE(s.type == None);

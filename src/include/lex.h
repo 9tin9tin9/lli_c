@@ -14,7 +14,7 @@ typedef struct {
 // sym will be MOVED to HashIdx
 // make a copy before passing to this function if sym will be used again
 HashIdx 
-HashIdx_new(Str sym, size_t idx);
+HashIdx_new(const Str* sym, size_t idx);
 
 void 
 HashIdx_del(HashIdx* hi);
@@ -37,11 +37,11 @@ typedef struct {
 }Tok;
 
 #define Tok(type_, content_) ((Tok){ .tokType = type_, .type_ = content_ })
-int Tok_eq(Tok, Tok);
-int HashIdx_eq(HashIdx left, HashIdx right);
+int Tok_eq(const Tok*, const Tok*);
+int HashIdx_eq(const HashIdx* left, const HashIdx* right);
 // Str will be MOVED
-Error Tok_fromStr(Tok*, Str);
+Error Tok_fromStr(Tok*, Str*);
 // Str: read only
-Error lex_tokenize(Vec* des, Str s);
+Error lex_tokenize(Vec* des, const Str* s);
 
 #endif

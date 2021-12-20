@@ -76,7 +76,7 @@ close: fd(Value)
 
 # extra
 # added for either debug or simplify instructions
-print_num: fd(Value, val(Value)
+print_num: fd(Value), val(Value)
 
 # extern
 src: script_name(Sym)  # source another file, load labels and symbols, don't execute

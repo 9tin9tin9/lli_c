@@ -2,10 +2,10 @@
 #include "include/error.h"
 
 HashIdx
-HashIdx_new(Str sym, size_t idx)
+HashIdx_new(const Str* sym, size_t idx)
 {
     return (HashIdx){
-        sym, idx
+        *sym, idx
     };
 }
 
@@ -16,36 +16,36 @@ HashIdx_del(HashIdx* hi)
 }
 
 int
-HashIdx_eq(HashIdx left, HashIdx right)
+HashIdx_eq(const HashIdx* left, const HashIdx* right)
 {
     return strcmp(
-        Str_at(left.sym, 0),
-        Str_at(right.sym, 0)
+        Str_at(&left->sym, 0),
+        Str_at(&right->sym, 0)
         ) == 0 &&
-    left.idx == right.idx;
+    left->idx == right->idx;
 }
 
 int
-Tok_eq(Tok left, Tok right)
+Tok_eq(const Tok* left, const Tok* right)
 {
-    int eq = left.tokType == right.tokType;
+    int eq = left->tokType == right->tokType;
     if (eq == 0) return 0;
-    switch (left.tokType){
+    switch (left->tokType){
         case Num:
-            return left.Num == right.Num;
+            return left->Num == right->Num;
         case Idx:
-            return left.Idx == right.Idx;
+            return left->Idx == right->Idx;
         case Var:
-            return HashIdx_eq(left.Var, right.Var);
+            return HashIdx_eq(&left->Var, &right->Var);
         case VarIdx:
-            return HashIdx_eq(left.VarIdx, right.VarIdx);
+            return HashIdx_eq(&left->VarIdx, &right->VarIdx);
         case Ltl:
             return strcmp(
-                    Str_at(left.Ltl, 0),
-                    Str_at(right.Ltl, 0)
+                    Str_at(&left->Ltl, 0),
+                    Str_at(&right->Ltl, 0)
                     ) == 0;
         case Sym:
-            return HashIdx_eq(left.Sym, right.Sym);
+            return HashIdx_eq(&left->Sym, &right->Sym);
         case Eof:
             return 1;
     }
@@ -62,13 +62,13 @@ Tok_eq(Tok left, Tok right)
     size_t newSize = end_ - start_; \
     char* new = malloc(newSize+1); \
     memcpy(new, Str_at(s_, start_), newSize+1); \
-    free(s_.array); \
-    s_.array = new; \
-    s.size = newSize; \
+    free(s_->array); \
+    s_->array = new; \
+    s->size = newSize; \
 }
 
 Error
-Tok_fromStr(Tok* tok, Str s)
+Tok_fromStr(Tok* tok, Str* s)
 {
     if (Str_len(s) == 0){
         *tok = (Tok){ Eof };
@@ -99,12 +99,12 @@ Tok_fromStr(Tok* tok, Str s)
                 if (Str_len(s) == 3){
                     return Error_MissingVarName;
                 }
-                shrinkStr(s, 2, s.size-2);
+                shrinkStr(s, 2, s->size-2);
                 *tok = Tok(VarIdx, HashIdx_new(s, 0));
                 return Ok;
             }else{
                 // Idx
-                shrinkStr(s, 1, s.size-2);
+                shrinkStr(s, 1, s->size-2);
                 char* ptr;
                 long idx = strtol(Str_at(s, 0), &ptr, 10);
                 if (ptr == Str_at(s, 0)){
@@ -116,19 +116,19 @@ Tok_fromStr(Tok* tok, Str s)
 
         // Var
         case '$':
-            shrinkStr(s, 1, s.size-1);
+            shrinkStr(s, 1, s->size-1);
             *tok = Tok(Var, HashIdx_new(s, 0));
             return Ok;
 
         // Ltl
         case '"':
-            shrinkStr(s, 1, s.size-2);
-            *tok = Tok(Ltl, s);
+            shrinkStr(s, 1, s->size-2);
+            *tok = Tok(Ltl, *s);
             return Ok;
 
         // Sym
         default:
-            *tok = Tok(Sym, s);
+            *tok = Tok(Sym, *s);
             return Ok;
     }
 }
@@ -137,7 +137,7 @@ Tok_fromStr(Tok* tok, Str s)
 
 int
 eat_token(
-    Tok* tok, Str s, size_t* ptr, 
+    Tok* tok, const Str* s, size_t* ptr, 
     char delim, char unexpect, int errno
     )
 {
@@ -223,11 +223,11 @@ eat_token(
     }
 
            // `current` moved to Tok_fromStr
-    return Tok_fromStr(tok, current);
+    return Tok_fromStr(tok, &current);
 }
 
 Error
-eat_operator(Tok* tok, size_t* ptr, Str s)
+eat_operator(Tok* tok, size_t* ptr, const Str* s)
 {
     try(eat_token(tok, s, ptr, ':', ',', 0));
     if (tok->tokType != Sym && tok->tokType != Eof) 
@@ -236,13 +236,13 @@ eat_operator(Tok* tok, size_t* ptr, Str s)
 }
 
 Error
-eat_args(Tok* tok, size_t* ptr, Str s)
+eat_args(Tok* tok, size_t* ptr, const Str* s)
 {
     return eat_token(tok, s, ptr, ',', ':', 0);
 }
 
 Error
-lex_tokenize(Vec* des, Str s)
+lex_tokenize(Vec* des, const Str* s)
 {
     // points to the idx that have read
     size_t ptr = 0;

@@ -13,12 +13,12 @@ push(){
             Tok(Eof, 0),
             Tok(Num, 10.0));
     size_t opcode = 10;
-    size_t len = Code_push(&c, toks, opcode);
+    size_t len = Code_push(&c, &toks, opcode);
     REQUIRE(len == 1);
-    Line l = *Vec_at(c.lines, 0, Line);
-    REQUIRE(Tok_eq(*Vec_at(l.toks, 0, Tok), Tok(Eof, 0)));
-    REQUIRE(Tok_eq(*Vec_at(l.toks, 1, Tok), Tok(Eof, 0)));
-    REQUIRE(Tok_eq(*Vec_at(l.toks, 2, Tok), Tok(Num, 10.0)));
+    Line l = *Vec_at(&c.lines, 0, Line);
+    REQUIRE(Tok_eq(Vec_at(&l.toks, 0, Tok), &Tok(Eof, 0)));
+    REQUIRE(Tok_eq(Vec_at(&l.toks, 1, Tok), &Tok(Eof, 0)));
+    REQUIRE(Tok_eq(Vec_at(&l.toks, 2, Tok), &Tok(Num, 10.0)));
     REQUIRE(l.opcode == opcode);
 }
 

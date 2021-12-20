@@ -1,4 +1,11 @@
-allc: 1002
-read: 0, [1], 1000
-print_num: [0]
-write: 1, [1], [0]
+allc: 10
+
+lbl: startLoop
+add: [1], 1
+mov: [1], [0]
+eq: [1], 10000000
+jc: [0], endLoop
+jmp: startLoop
+
+lbl: endLoop
+print_num: 1, [1]

@@ -6,16 +6,16 @@ const int ERROR_MSG_LEVEL = 1;
 
 // find symbol and then assign index or update table
 #define _findAndUpdate(location, action) \
-    tok = Vec_at(*toks, 1, Tok);  \
+    tok = Vec_at(toks, 1, Tok);  \
     idx = Hashmap_at(  \
             m->location,  \
-            Str_raw(tok->Sym.sym),  \
+            Str_raw(&tok->Sym.sym),  \
             size_t);  \
     if (!idx) {  \
         tok->Sym.idx = action;  \
         Hashmap_insert(  \
                 &m->location,  \
-                Str_raw(tok->Sym.sym),  \
+                Str_raw(&tok->Sym.sym),  \
                 tok->Sym.idx);  \
     }else{  \
         tok->Sym.idx = *idx;  \
@@ -31,7 +31,7 @@ createSymTable(size_t opcode, Mem* m, Code* c, Vec* toks)
         // lbl | alias
         case 21:
         case 22:
-            _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(*c)));
+            _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(c)));
         
         // var
         case 3:
@@ -43,7 +43,7 @@ createSymTable(size_t opcode, Mem* m, Code* c, Vec* toks)
 #undef _findAndUpdate
 
 Error
-preprocess(Mem* m, Code* c, Vec toks)
+preprocess(Mem* m, Code* c, Vec* toks)
 {
     if (Vec_count(toks) == 0){
         return Ok;
@@ -62,17 +62,21 @@ preprocess(Mem* m, Code* c, Vec toks)
     }
     opTok->Sym.idx = *opcode;
 
-    try(createSymTable(*opcode, m, c, &toks));
-
+    try(createSymTable(*opcode, m, c, toks));
     Code_push(c, toks, *opcode);
     return Ok;
 }
 
 #define _updateLabel(_i)  \
-    hi = &Vec_at(line->toks, _i, Tok)->Sym;  \
+    {  \
+        Tok* t = Vec_at(&line->toks, _i, Tok);  \
+        if (!t) return Error_WrongArgCount;  \
+        hi = &t->Sym;  \
+    }  \
+    hi = &Vec_at(&line->toks, _i, Tok)->Sym;  \
     idx = Hashmap_at(  \
             m->labelLookUp,  \
-            Str_raw(hi->sym),  \
+            Str_raw(&hi->sym),  \
             size_t);  \
     if (!idx)  \
         return Error_UndefinedLabel;  \
@@ -83,12 +87,12 @@ preprocess(Mem* m, Code* c, Vec toks)
 Error
 updateSymIdx(Mem* m, Code* c)
 {
-    const size_t codeLen = Code_len(*c);
+    const size_t codeLen = Code_len(c);
     size_t* idx;
 
-    for (int i = 0; i < codeLen; i++){
-        Line* line = Code_at(*c, i);
-        HashIdx* hi = &Vec_at(line->toks, 0, Tok)->Sym;
+    for (int i = 0; i < codeLen; i++, Code_ptr_incr(c)){
+        Line* line = Code_at(c, i);
+        HashIdx* hi = &Vec_at(&line->toks, 0, Tok)->Sym;
 
         switch (hi->idx) {
             // var | lbl
@@ -108,16 +112,16 @@ updateSymIdx(Mem* m, Code* c)
             // replace Var or VarIdx
             default:
                 // Var and VarIdx has same mem layout in union
-                for (int j = 1; j < Vec_count(line->toks); j++){
-                    enum Tok_Type tt = Vec_at(line->toks, j, Tok)->tokType;
+                for (int j = 1; j < Vec_count(&line->toks); j++){
+                    enum Tok_Type tt = Vec_at(&line->toks, j, Tok)->tokType;
                     if (tt != Var && tt != VarIdx){
                         continue;
                     }
 
-                    hi = &Vec_at(line->toks, j, Tok)->Var;
+                    hi = &Vec_at(&line->toks, j, Tok)->Var;
                     idx = Hashmap_at(
                             m->varLookUp, 
-                            Str_raw(hi->sym), 
+                            Str_raw(&hi->sym), 
                             size_t);
                     if (!idx)
                         return Error_UndefinedVar;
@@ -126,10 +130,25 @@ updateSymIdx(Mem* m, Code* c)
                 break;
         }
     }
+    Code_ptr_set(c, 0);
     return Ok;
 }
 
 #undef _updateLabel
+
+void
+argSlice(Code* c)
+{
+    for (int i = 0; i < Code_len(c); i++){
+        Line* l = Code_at(c, i);
+        Vec t = l->toks;
+        t.array += t.elem_size;
+        t.size--;
+        Vec a = Vec_copy(&t);
+        Vec_del(&l->toks);
+        l->toks = a;
+    }
+}
 
 Error
 readFromFile(const char* fileName, Mem* m, Code* c)
@@ -149,15 +168,20 @@ readFromFile(const char* fileName, Mem* m, Code* c)
         // remove trailing \n
         line[strlen(line)-1] = 0;
         Str wrapper = (Str){strlen(line), line};
-        try(lex_tokenize(&toks, wrapper));
+        try(lex_tokenize(&toks, &wrapper));
 
-        try(preprocess(m, c, toks));
+        try(preprocess(m, c, &toks));
+        Code_ptr_incr(c);
     }
 
     if (ferror(fileptr)) {
         return Error_CannotReadFile;
     }
-    return updateSymIdx(m, c);
+    Code_ptr_set(c, 0);
+    try(updateSymIdx(m, c));
+    // replace toks with args only. Op sym is not needed anymore
+    argSlice(c);
+    return Ok;
 }
 
 #define exitIfError(_c)  \
@@ -166,17 +190,15 @@ readFromFile(const char* fileName, Mem* m, Code* c)
         exit(1);  \
     }
 
-void
+Error
 run(Mem* m, Code* c)
 {
-    while(Code_ptr(*c) < Code_len(*c)){
-        Signal s;
-        Error r = op_exec(m, *c, &s);
-        exitIfError(c);
-
-        r = Signal_respond(s, m, c);
-        exitIfError(c);
+    Signal s;
+    while(Code_ptr(c) < Code_len(c)){
+        try(op_exec(m, c, &s));
+        try(Signal_respond(&s, m, c));
     }
+    return Ok;
 }
 
 int main(int argc, char** argv){
@@ -191,7 +213,8 @@ int main(int argc, char** argv){
     op_initOpTable();
     Error r = readFromFile(fileName, &m, &c);
     exitIfError(&c);
-    run(&m, &c);
+    r = run(&m, &c);
+    exitIfError(&c);
 
     return 0;
 }

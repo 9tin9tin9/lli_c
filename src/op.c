@@ -4,24 +4,26 @@
 
 #define addEntry(op) { \
     Vec_push(&funcVec, &op); \
-    Hashmap_insert(&opIdxTable, #op, Vec_count(funcVec)-1); \
+    Hashmap_insert(&opIdxTable, #op, Vec_count(&funcVec)-1); \
 }
 
 #define addEntryAlternate(op) { \
     Vec_push(&funcVec, &op##_); \
-    Hashmap_insert(&opIdxTable, #op, Vec_count(funcVec)-1); \
+    Hashmap_insert(&opIdxTable, #op, Vec_count(&funcVec)-1); \
 }
 
 Hashmap opIdxTable = Hashmap();
 Vec funcVec = Vec(OpFunc);
 
 Error
-print_num(Vec v, Mem* m, Signal* s)
+print_num(const Vec* v, Mem* m, Signal* s)
 {
-    argcGuard(v, 1);
+    argcGuard(v, 2);
+    size_t fd;
     double value;
-    try(Tok_getValue(*Vec_at(v, 0, Tok), *m, &value));
-    printf("%f\n", value);
+    try(Tok_getUint(Vec_at(v, 0, Tok), m, &fd));
+    try(Tok_getValue(Vec_at(v, 1, Tok), m, &value));
+    fprintf(fdopen(fd, "w"), "%f\n", value);
     *s = Signal(None, 0);
     return Ok;
 }
@@ -78,65 +80,62 @@ op_initOpTable()
 // Do NOT free Signal
 // Signal.Src is owned by Code
 Error
-op_exec(Mem* m, Code c, Signal* result)
+op_exec(Mem* m, const Code* c, Signal* signal)
 {
     Line* l = Code_curr(c);
     // TokType should have been checked during preprocessing already
-    size_t opcode = l->opcode;
-    Vec args = (Vec){
-        .elem_size = l->toks.elem_size,
-        .size = l->toks.size-1,
-        .array = l->toks.array+l->toks.elem_size};
-    return (*Vec_at(funcVec, opcode, OpFunc))(args, m, result);
+    return (*Vec_at(&funcVec, l->opcode, OpFunc))(&l->toks, m, signal);
 }
 
 Error
-Signal_respond(Signal self, Mem* m, Code* c)
+readFromFile(const char* fileName, Mem* m, Code* c);
+
+Error
+Signal_respond(const Signal* self, Mem* m, Code* c)
 {
-    Error r;
-    switch (self.type) {
+    switch (self->type) {
         case None:
             break;
         case Jmp:
-            Code_ptr_set(c, self.Jmp);
+            Code_ptr_set(c, self->Jmp);
             return Ok;
         case SetLbl:
-            Mem_label_set(m, self.SetLbl, Code_ptr(*c)+1);
+            Mem_label_set(m, self->SetLbl, Code_ptr(c)+1);
             break;
         case SetAls:
-            Mem_label_set(m, self.SetAls.alias, self.SetAls.loc);
+            Mem_label_set(m, self->SetAls.alias, self->SetAls.loc);
             break;
-        // case Src:
-        //     try(readFromFile(self.Src.array, m, c));
+        case Src:
+            try(readFromFile(self->Src.array, m, c));
+            break;
     }
-
-    Code_ptr_incr(c, 1);
+    Code_ptr_incr(c);
     return Ok;
 }
 
 // Extend Tok
 
 Error
-Tok_getValue(Tok self, Mem m, double* d)
+Tok_getValue(const Tok* self, const Mem* m, double* d)
 {
-    switch (self.tokType) {
+    switch (self->tokType) {
         case Num:
-            *d = self.Num;
+            *d = self->Num;
             return Ok;
 
         case Idx:
-            return Mem_mem_at(m, self.Idx, d);
+            return Mem_mem_at(m, self->Idx, d);
 
         case Var:
             // Find where Var points to
             ;long i;
-            try(Mem_var_find(m, self.Var, &i));
+            try(Mem_var_find(m, &self->Var, &i));
             return Mem_mem_at(m, i, d);
 
         case VarIdx:
             // Read the value pointed by Var, use it as pointer to lookup value
             ;double value;
-            try(Mem_var_find(m, self.VarIdx, &i));
+            try(Mem_var_find(m, &self->VarIdx, &i));
             try(Mem_mem_at(m, i, &value));
             if (value != (long)value){
                 return Error_NotInteger;
@@ -149,7 +148,7 @@ Tok_getValue(Tok self, Mem m, double* d)
 }
 
 Error
-Tok_getUint(Tok self, Mem m, size_t* i)
+Tok_getUint(const Tok* self, const Mem* m, size_t* i)
 {
     double f;
     try(Tok_getValue(self, m, &f));
@@ -161,7 +160,7 @@ Tok_getUint(Tok self, Mem m, size_t* i)
 }
 
 Error
-Tok_getInt(Tok self, Mem m, long *i)
+Tok_getInt(const Tok* self, const Mem* m, long *i)
 {
     double f;
     try(Tok_getValue(self, m, &f));
@@ -173,21 +172,21 @@ Tok_getInt(Tok self, Mem m, long *i)
 }
 
 Error
-Tok_getLoc(Tok self, Mem* m, long* l)
+Tok_getLoc(const Tok* self, Mem* m, long* l)
 {
-    switch (self.tokType){
+    switch (self->tokType){
         case Idx:
-            *l = self.Idx;
+            *l = self->Idx;
             return Ok;
 
         case Var:
-            return Mem_var_find(*m, self.Var, l);
+            return Mem_var_find(m, &self->Var, l);
 
         case VarIdx:
             ;long idx;
-            try(Mem_var_find(*m, self.VarIdx, &idx));
+            try(Mem_var_find(m, &self->VarIdx, &idx));
             double value;
-            try(Mem_mem_at(*m, idx, &value));
+            try(Mem_mem_at(m, idx, &value));
             if (value != (long)value){
                 return Error_NotInteger;
             }
@@ -204,7 +203,7 @@ Tok_getLoc(Tok self, Mem* m, long* l)
 }
 
 Error
-Tok_writeValue(Tok self, Mem* m, double d)
+Tok_writeValue(const Tok* self, Mem* m, double d)
 {
     long idx;
     try(Tok_getLoc(self, m, &idx));
@@ -216,14 +215,14 @@ Tok_writeValue(Tok self, Mem* m, double d)
 }
 
 Error
-Tok_createLtl(Tok self, Mem* m, long* i)
+Tok_createLtl(const Tok* self, Mem* m, long* i)
 {
-    if (self.tokType != Ltl){
+    if (self->tokType != Ltl){
         return Error_WrongArgType;
     }
-    *i = Mem_nmem_len(*m);
-    for (int i = 0; i < Str_count(self.Ltl); i++){
-        Vec_push(&m->nmem, (double)*Str_at(self.Ltl, i));
+    *i = Mem_nmem_len(m);
+    for (int i = 0; i < Str_count(&self->Ltl); i++){
+        Vec_push(&m->nmem, (double)*Str_at(&self->Ltl, i));
     }
     // ending a literal with two 0.0 slots, one provided by trailing null char in self.Ltl
     Vec_push(&m->nmem, 0.0);
@@ -232,11 +231,11 @@ Tok_createLtl(Tok self, Mem* m, long* i)
 
 // Do NOT free the HashIdx
 Error
-Tok_getSym(Tok self, HashIdx* hi)
+Tok_getSym(const Tok* self, HashIdx* hi)
 {
-    if (self.tokType != Sym){
+    if (self->tokType != Sym){
         return Error_WrongArgType;
     }
-    *hi = self.Sym;
+    *hi = self->Sym;
     return Ok;
 }

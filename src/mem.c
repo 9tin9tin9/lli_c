@@ -18,7 +18,7 @@ Mem_new()
 }
 
 Error
-Mem_mem_at(Mem self, long i, double* des)
+Mem_mem_at(const Mem* self, long i, double* des)
 {
     return i < 0 ? 
         Mem_nmem_at(self, -i, des) : 
@@ -34,9 +34,9 @@ Mem_mem_set(Mem* self, long i, double v)
 }
 
 Error
-Mem_pmem_at(Mem self, size_t i, double* des)
+Mem_pmem_at(const Mem* self, size_t i, double* des)
 {
-    double* slot = Vec_at(self.pmem, i, double);
+    double* slot = Vec_at(&self->pmem, i, double);
     if (!slot) 
         return Error_InvalidMemAccess;
     *des = *slot;
@@ -46,7 +46,7 @@ Mem_pmem_at(Mem self, size_t i, double* des)
 Error
 Mem_pmem_set(Mem* self, size_t i, double v)
 {
-    double* slot = Vec_at(self->pmem, i, double);
+    double* slot = Vec_at(&self->pmem, i, double);
     if (!slot)
         return Error_InvalidMemAccess;
     *slot = v;
@@ -54,9 +54,9 @@ Mem_pmem_set(Mem* self, size_t i, double v)
 }
 
 size_t
-Mem_pmem_len(Mem self)
+Mem_pmem_len(const Mem* self)
 {
-    return Vec_count(self.pmem);
+    return Vec_count(&self->pmem);
 }
 
 void
@@ -66,9 +66,9 @@ Mem_pmem_push(Mem* self, double v)
 }
 
 Error
-Mem_nmem_at(Mem self, size_t i, double* des)
+Mem_nmem_at(const Mem* self, size_t i, double* des)
 {
-    double* slot = Vec_at(self.nmem, i, double);
+    double* slot = Vec_at(&self->nmem, i, double);
     if (!slot)
         return Error_InvalidMemAccess;
     *des = *slot;
@@ -78,7 +78,7 @@ Mem_nmem_at(Mem self, size_t i, double* des)
 Error
 Mem_nmem_set(Mem* self, size_t i, double v)
 {
-    double* slot = Vec_at(self->nmem, i, double);
+    double* slot = Vec_at(&self->nmem, i, double);
     if (!slot)
         return Error_InvalidMemAccess;
     *slot = v;
@@ -86,14 +86,14 @@ Mem_nmem_set(Mem* self, size_t i, double v)
 }
 
 size_t
-Mem_nmem_len(Mem self)
+Mem_nmem_len(const Mem* self)
 {
-    return Vec_count(self.nmem);
+    return Vec_count(&self->nmem);
 }
 
 void
-Mem_nmem_alloc(Mem* self, Vec v){
-    Vec_insert(&self->nmem, v, Vec_count(self->nmem));
+Mem_nmem_alloc(Mem* self, const Vec* v){
+    Vec_insert(&self->nmem, v, Vec_count(&self->nmem));
 }
 
 void
@@ -106,19 +106,19 @@ size_t
 Mem_var_add(Mem* self, long idx)
 {
     Vec_push(&self->var, idx);
-    return Vec_count(self->var) - 1;
+    return Vec_count(&self->var) - 1;
 }
 
 void
 Mem_var_set(Mem* self, size_t i, long idx)
 {
-    *Vec_at(self->var, i, long) = idx;
+    *Vec_at(&self->var, i, long) = idx;
 }
 
 Error
-Mem_var_find(Mem self, HashIdx hi, long* des)
+Mem_var_find(const Mem* self, const HashIdx* hi, long* des)
 {
-    long* elem = Vec_at(self.var, hi.idx, long);
+    long* elem = Vec_at(&self->var, hi->idx, long);
     if (!elem)
         return Error_UndefinedVar;
     *des = *elem;
@@ -129,39 +129,27 @@ size_t
 Mem_label_add(Mem* self, size_t idx)
 {
     Vec_push(&self->label, idx);
-    return Vec_count(self->label) - 1;
+    return Vec_count(&self->label) - 1;
 }
 
 void
 Mem_label_set(Mem* self, size_t i, size_t idx)
 {
-    *Vec_at(self->label, i, size_t) = idx;
+    *Vec_at(&self->label, i, size_t) = idx;
 }
 
 Error
-Mem_label_find(Mem self, HashIdx hi, size_t* des)
+Mem_label_find(const Mem* self, const HashIdx* hi, size_t* des)
 {
-    size_t* elem = Vec_at(self.label, hi.idx, size_t);
+    size_t* elem = Vec_at(&self->label, hi->idx, size_t);
     if (!elem)
         return Error_UndefinedLabel;
     *des = *elem;
     return Ok;
 }
 
-void
-idxIncr(long* i, long delta)
-{
-    *i += (*i >= 0? delta : -delta);
-}
-
-void
-idxDecr(long* i, long delta)
-{
-    *i -= (*i >= 0? delta : -delta);
-}
-
 Error
-Mem_readLtl(Mem self, long idx, Str* des)
+Mem_readLtl(const Mem* self, long idx, Str* des)
 {
     int zeroCount = 0;
     while(1){

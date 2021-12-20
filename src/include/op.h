@@ -16,7 +16,7 @@ typedef struct{
         Src,
     }type;
     union{
-        short None;
+        char None;
         size_t SetLbl;
         struct{
             size_t alias;
@@ -27,12 +27,12 @@ typedef struct{
     };
 }Signal;
 #define Signal(type_, ...) ((Signal){type_, .type_ = __VA_ARGS__})
-Error Signal_respond(Signal, Mem*, Code*);
+Error Signal_respond(const Signal*, Mem*, Code*);
 
-typedef Error (*OpFunc)(Vec, Mem*, Signal*);
+typedef Error (*OpFunc)(const Vec*, Mem*, Signal*);
 
 void op_initOpTable();
-Error op_exec(Mem*, Code, Signal*);
+Error op_exec(Mem*, const Code*, Signal*);
 
 // Hashmap<const char*, size_t>
 extern Hashmap opIdxTable;
@@ -40,12 +40,12 @@ extern Hashmap opIdxTable;
 extern Vec funcVec;
 
 // Extend Tok
-Error Tok_getValue(Tok, Mem, double*);
-Error Tok_getUint(Tok, Mem, size_t*);
-Error Tok_getInt(Tok, Mem, long*);
-Error Tok_getLoc(Tok, Mem*, long*);
-Error Tok_writeValue(Tok, Mem*, double);
-Error Tok_createLtl(Tok, Mem*, long*);
-Error Tok_getSym(Tok, HashIdx*);
+Error Tok_getValue(const Tok*, const Mem*, double*);
+Error Tok_getUint(const Tok*, const Mem*, size_t*);
+Error Tok_getInt(const Tok*, const Mem*, long*);
+Error Tok_getLoc(const Tok*, Mem*, long*);
+Error Tok_writeValue(const Tok*, Mem*, double);
+Error Tok_createLtl(const Tok*, Mem*, long*);
+Error Tok_getSym(const Tok*, HashIdx*);
 
 #endif

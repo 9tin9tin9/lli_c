@@ -13,16 +13,17 @@ typedef struct {
     size_t ptr;
 }Code;
 
-Code Code_new();
+#define Code_new() ((Code){Vec(Line), 0})
 
 // Vec will be MOVED
-size_t Code_push(Code*, Vec, size_t);
+#define Code_push(c_, t_, o_) Vec_push(&(c_)->lines, ((Line){(o_), *(t_)}))
 
-Line* Code_at(Code, size_t);
-Line* Code_curr(Code);
-size_t Code_len(Code);
-size_t Code_ptr(Code);
-void Code_ptr_set(Code*, size_t);
-void Code_ptr_incr(Code*, size_t);
+#define Code_at(c_, i_) Vec_at(&(c_)->lines, (i_), Line)
+#define Code_curr(c_) Vec_at(&(c_)->lines, (c_)->ptr, Line)
+#define Code_len(c_) Vec_count(&(c_)->lines)
+#define Code_ptr(c_) ((c_)->ptr)
+
+#define Code_ptr_set(c_, p_) ( (c_)->ptr = (p_) )
+#define Code_ptr_incr(c_) ( (c_)->ptr++ )
 
 #endif
