@@ -1,6 +1,6 @@
 CC = clang
 FSANFLAG = # -fsanitize=address -fsanitize=alignment 
-OPTFLAG = -g -O3
+OPTFLAG = -g -Ofast
 STDFLAG = -std=c11
 CFLAGS = $(STDFLAG) $(FSANFLAG) $(OPTFLAG) -pipe
 FILE_NAMES = error lex mem op opdef_nop opdef_mem opdef_math opdef_cmp opdef_logic opdef_flow opdef_sys

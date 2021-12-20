@@ -86,6 +86,8 @@ static inline void* _Vec_at(const Vec* v_, long p_) {
     (type_*)_Vec_at(vec_, pos_) \
 )
 
+#define Vec_at_unsafe(v_, p_, t_) (&((t_*)(v_)->array)[p_])
+
 #define Vec_front(vec_, type_) Vec_at((vec_), 0, type_) 
 
 #define Vec_back(vec_, type_) Vec_at((vec_), -1, type_) 

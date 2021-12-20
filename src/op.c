@@ -82,8 +82,7 @@ op_initOpTable()
 Error
 op_exec(Mem* m, const Code* c, Signal* signal)
 {
-    Line* l = Code_curr(c);
-    // TokType should have been checked during preprocessing already
+    const Line* l = Code_curr(c);
     return (*Vec_at(&funcVec, l->opcode, OpFunc))(&l->toks, m, signal);
 }
 

@@ -9,7 +9,7 @@ exit_(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 1);
     long exitCode;
-    try(Tok_getInt(Vec_at(v, 0, Tok), m, &exitCode));
+    try(Tok_getInt(Vec_at_unsafe(v, 0, Tok), m, &exitCode));
     exit(exitCode);
 }
 
@@ -18,16 +18,16 @@ write_(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 3);
     size_t fd;
-    try(Tok_getUint(Vec_at(v, 0, Tok), m, &fd));
-    bool* slot = Vec_at(&m->fd, fd, bool);
+    try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &fd));
+    bool* slot = Vec_at_unsafe(&m->fd, fd, bool);
     if (!slot || !*slot){
         return Error_BadFileDescriptor;
     }
     FILE* f = fdopen(fd, "w");
     long srcIdx;
-    try(Tok_getLoc(Vec_at(v, 1, Tok), m, &srcIdx));
+    try(Tok_getLoc(Vec_at_unsafe(v, 1, Tok), m, &srcIdx));
     size_t size;
-    try(Tok_getUint(Vec_at(v, 2, Tok), m, &size));
+    try(Tok_getUint(Vec_at_unsafe(v, 2, Tok), m, &size));
     size_t i;
     for (i = 0; i < size; i++)
     {
@@ -48,16 +48,16 @@ read_(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 3);
     size_t fd;
-    try(Tok_getUint(Vec_at(v, 0, Tok), m, &fd));
-    bool* slot = Vec_at(&m->fd, fd, bool);
+    try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &fd));
+    bool* slot = Vec_at_unsafe(&m->fd, fd, bool);
     if (!slot || !*slot){
         return Error_BadFileDescriptor;
     }
     FILE* f = fdopen(fd, "r");
     long desIdx;
-    try(Tok_getLoc(Vec_at(v, 1, Tok), m, &desIdx));
+    try(Tok_getLoc(Vec_at_unsafe(v, 1, Tok), m, &desIdx));
     size_t size;
-    try(Tok_getUint(Vec_at(v, 2, Tok), m, &size));
+    try(Tok_getUint(Vec_at_unsafe(v, 2, Tok), m, &size));
     char buf[MAX_INPUT];
     size_t readSize = fread(buf, sizeof(char), MAX_INPUT, f);
     if (!readSize){
@@ -112,7 +112,7 @@ open_(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 2);
     Str name;
-    Tok t = *Vec_at(v, 0, Tok);
+    Tok t = *Vec_at_unsafe(v, 0, Tok);
     if (t.tokType == Sym){
         // borrow
         name = t.Sym.sym;
@@ -122,14 +122,14 @@ open_(const Vec* v, Mem* m, Signal* s)
         try(Mem_readLtl(m, namePtr, &name));
     }
     size_t oVal;
-    try(Tok_getUint(Vec_at(v, 1, Tok), m, &oVal));
+    try(Tok_getUint(Vec_at_unsafe(v, 1, Tok), m, &oVal));
     int oflag;
     try(parseOpenOption(oVal, &oflag));
     int fd = open(Str_raw(&name), oflag);
     if (fd == -1){
         return Error_IoError;
     }
-    bool* slot = Vec_at(&m->fd, fd, bool);
+    bool* slot = Vec_at_unsafe(&m->fd, fd, bool);
     if (!slot){
         return Error_ExceedOpenLimit;
     }
@@ -144,8 +144,8 @@ close_(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 1);
     size_t fd;
-    try(Tok_getUint(Vec_at(v, 0, Tok), m, &fd));
-    bool* slot = Vec_at(&m->fd, fd, bool);
+    try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &fd));
+    bool* slot = Vec_at_unsafe(&m->fd, fd, bool);
     if (!slot || !*slot){
         return Error_BadFileDescriptor;
     }

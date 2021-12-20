@@ -43,6 +43,7 @@ typedef enum{
 // void* -> Code*
 void Error_print(Error, void*, int);
 
-#define try(action_) { Error r = (action_); if (r) return r; }
+#define try(a_) { Error r = (a_); if (r) return r; }
+// #define try(a_) a_
 
 #endif

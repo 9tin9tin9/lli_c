@@ -4,8 +4,8 @@ Error
 math_parseArg(const Vec* v, Mem* m, double* left, double* right)
 {
     argcGuard(v, 2);
-    try(Tok_getValue(Vec_at(v, 0, Tok), m, left));
-    try(Tok_getValue(Vec_at(v, 1, Tok), m, right));
+    try(Tok_getValue(Vec_at_unsafe(v, 0, Tok), m, left));
+    try(Tok_getValue(Vec_at_unsafe(v, 1, Tok), m, right));
     return Ok;
 }
 
