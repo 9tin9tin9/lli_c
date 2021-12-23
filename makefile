@@ -3,7 +3,7 @@ FSANFLAG = # -fsanitize=address -fsanitize=alignment
 OPTFLAG = -g -Ofast
 STDFLAG = -std=c11
 CFLAGS = $(STDFLAG) $(FSANFLAG) $(OPTFLAG) -pipe
-FILE_NAMES = error lex mem op opdef_nop opdef_mem opdef_math opdef_cmp opdef_logic opdef_flow opdef_sys
+FILE_NAMES = error lex mem op core opdef_nop opdef_mem opdef_math opdef_cmp opdef_logic opdef_flow opdef_sys opdef_extern
 
 SRCDIR = src
 TARGETDIR = target
@@ -17,14 +17,14 @@ build:
 	@if [[ ! -e $(OBJDIR)/op ]]; then mkdir $(OBJDIR)/op; echo created \'$(OBJDIR)/op\' directory; fi
 	@if [[ ! -e $(BINDIR)/ ]]; then mkdir $(BINDIR); echo created \'$(BINDIR)\' directory; fi
 	@rm -rf $(BINDIR)/*
-	@make all src/main
-	@mv src/main $(BINDIR)
-	@mv src/main.dSYM $(BINDIR)
+	@make all $(SRCDIR)/main
+	@mv $(SRCDIR)/main $(BINDIR)
+	@if [[ -e $(SRCDIR)/main.dSYM ]]; then mv $(SRCDIR)/main.dSYM $(BINDIR); fi
 
 run:
 	@./$(BINDIR)/main $(f)
 
-src/main: $(OBJ)
+$(SRCDIR)/main: $(OBJ)
 
 all: $(OBJ)
 

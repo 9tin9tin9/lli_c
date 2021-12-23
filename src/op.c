@@ -1,5 +1,6 @@
 #include "include/op.h"
 #include "include/opdef.h"
+#include "include/core.h"
 #include <stdio.h>
 
 #define addEntry(op) { \
@@ -72,6 +73,8 @@ op_initOpTable()
     addEntryAlternate(read);
     addEntryAlternate(write);
 
+    addEntry(src);
+
     addEntry(print_num);
 }
 
@@ -87,7 +90,7 @@ op_exec(Mem* m, const Code* c, Signal* signal)
 }
 
 Error
-readFromFile(const char* fileName, Mem* m, Code* c);
+Code_fromFile(const char* fileName, Mem* m, Code* c);
 
 Error
 Signal_respond(const Signal* self, Mem* m, Code* c)
@@ -105,7 +108,11 @@ Signal_respond(const Signal* self, Mem* m, Code* c)
             Mem_label_set(m, self->SetAls.alias, self->SetAls.loc);
             break;
         case Src:
-            try(readFromFile(self->Src.array, m, c));
+            {
+            Code src = Code_new();
+            try(Code_fromFile(self->Src.array, m, &src));
+            try(run(m, &src));
+            }
             break;
     }
     Code_ptr_incr(c);

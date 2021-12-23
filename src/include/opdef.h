@@ -46,4 +46,6 @@ defOp(close_);
 defOp(read_);
 defOp(write_);
 
+defOp(src);
+
 #endif
