@@ -34,39 +34,34 @@ op_initOpTable()
 {
     addEntry(nop);
 
-    // 1
     addEntry(mov);
     addEntry(cpy);
     addEntry(var);
+    addEntry(loc);
     addEntry(incr);
     addEntry(decr);
     addEntry(allc);
 
-    // 7
     addEntry(add);
     addEntry(sub);
     addEntry(mul);
     addEntryAlternate(div);
     addEntry(mod);
 
-    // 12
     addEntry(eq);
     addEntry(ne);
     addEntry(gt);
     addEntry(lt);
 
-    // 16
     addEntry(and);
     addEntry(or);
     addEntry(not);
 
-    // 19
     addEntry(jmp);
     addEntry(jc);
     addEntry(lbl);
     addEntry(als);
 
-    // 23
     addEntryAlternate(exit);
     addEntryAlternate(open);
     addEntryAlternate(close);
@@ -130,23 +125,33 @@ Tok_getValue(const Tok* self, const Mem* m, double* d)
             return Ok;
 
         case Idx:
-            return Mem_mem_at(m, self->Idx, d);
+            ;const struct Idx* idx = &self->Idx;
+            size_t layer = 0;
+            while(idx->type == Idx_Type_Idx){
+                idx = idx->Idx;
+                layer++;
+            }
+
+            if (idx->type == Idx_Type_Num){
+                try(Mem_mem_at(m, idx->Num, d));
+            }else{
+                long i;
+                try(Mem_var_find(m, &idx->Var, &i));
+                try(Mem_mem_at(m, i, d));
+            }
+
+            for (size_t i = 0; i < layer; i++){
+                if (*d != (long)*d)
+                    return Error_NotInteger;
+                try(Mem_mem_at(m, (long)*d, d));
+            }
+            return Ok;
 
         case Var:
             // Find where Var points to
             ;long i;
             try(Mem_var_find(m, &self->Var, &i));
             return Mem_mem_at(m, i, d);
-
-        case VarIdx:
-            // Read the value pointed by Var, use it as pointer to lookup value
-            ;double value;
-            try(Mem_var_find(m, &self->VarIdx, &i));
-            try(Mem_mem_at(m, i, &value));
-            if (value != (long)value){
-                return Error_NotInteger;
-            }
-            return Mem_mem_at(m, value, d);
 
         default:
             return Error_WrongArgType;
@@ -182,22 +187,30 @@ Tok_getLoc(const Tok* self, Mem* m, long* l)
 {
     switch (self->tokType){
         case Idx:
-            *l = self->Idx;
+            ;const struct Idx* idx = &self->Idx;
+            long layer = 0;
+            while(idx->type == Idx_Type_Idx){
+                idx = idx->Idx;
+                layer++;
+            }
+
+            if (idx->type == Idx_Type_Num){
+                *l = idx->Num;
+            }else{
+                try(Mem_var_find(m, &idx->Var, l));
+            }
+
+            for (long i = 0; i < layer-1; i++){
+                double d = *l;
+                try(Mem_mem_at(m, (long)d, &d));
+                if (d != (long)d)
+                    return Error_NotInteger;
+                *l = d;
+            }
             return Ok;
 
         case Var:
             return Mem_var_find(m, &self->Var, l);
-
-        case VarIdx:
-            ;long idx;
-            try(Mem_var_find(m, &self->VarIdx, &idx));
-            double value;
-            try(Mem_mem_at(m, idx, &value));
-            if (value != (long)value){
-                return Error_NotInteger;
-            }
-            *l = (long)value;
-            return Ok;
 
         case Ltl:
             return Tok_createLtl(self, m, l);

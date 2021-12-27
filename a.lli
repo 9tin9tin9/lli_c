@@ -1,11 +1,10 @@
-allc: 10
-
-src: b.lli
+allc: 1000
 
 lbl: startLoop
 add: [1], 1
 mov: [1], [0]
-eq: [1], [2]
+
+eq: [1], 10000
 jc: [0], endLoop
 jmp: startLoop
 

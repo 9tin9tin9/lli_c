@@ -16,14 +16,13 @@
 - Reserved symbols: `:,"[]$#`
 - Syntax of primitive Type:
     - Num: `-?[1-9][0-9]*(?:.[0-9]+)?`
-    - Idx: 0 or Positive integer wrapped in square brackets, no space
+    - Idx: Integer or Var wrapped in square brackets, no space, can be nested: [[1]] / [[[$aVariable]]]
     - Var: `$name`
-    - VarIdx: `[$name]`, no space inside brackets
     - Sym: `[^\s0-9$#"\[\]:,]+`
     - Ltl: String literal wrapped in double quotes
 - Args:
-    - Value: {Num, Idx, Var, VarIdx}
-    - Ptr: {Idx, Var, VarIdx, Ltl}
+    - Value: {Num, Idx, Var}
+    - Ptr: {Idx, Var, Ltl}
     - Writable Ptr: ptr with positive index
         - Ltl returns negative ptr, which is unwritable
     - Symbol: {Sym}
@@ -37,6 +36,7 @@
 mov: des(WPtr), src(Value)  # assignment, read value
 cpy: des(WPtr), src(Ptr), size(Value)  # memcpy. When src = Ltl, a new ltl is created and its idx is used as src idx
 var: name(Sym), idx(Ptr)  # Creates or update $name with index = idx
+loc: ptr(Ptr)  # writes the ptr as value to [0]
 incr: var(Sym), num(Value)  # Used to iterate->read/write pmem, potentially can be used to do stack operations. var(Sym) has to be declared before
 decr: var(Sym), num(Value)  # Used to iterate->read nmem
 allc: size(Value)  # Push slots to pmem

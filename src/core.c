@@ -1,5 +1,6 @@
 #include "include/core.h"
 #include "include/op.h"
+#include "include/opdef.h"
 #include <stdio.h>
 #include <limits.h>
 
@@ -27,13 +28,11 @@ createSymTable(size_t opcode, Mem* m, Code* c, Vec* toks)
     Tok* tok;
     size_t* idx;
     switch (opcode){
-        // lbl | alias
-        case 21:
-        case 22:
+        case OPCODE_LBL:
+        case OPCODE_ALS:
             _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(c)));
         
-        // var
-        case 3:
+        case OPCODE_VAR:
             _findAndUpdate(varLookUp, Mem_var_add(m, 0));
     }
     return Ok;
@@ -94,30 +93,32 @@ updateSymIdx(Mem* m, Code* c)
         HashIdx* hi = &Vec_at(&line->toks, 0, Tok)->Sym;
 
         switch (hi->idx) {
-            // var | lbl
-            case 3:
-            case 21:
+            case OPCODE_VAR:
+            case OPCODE_LBL:
                 break;
 
-            // jmp
-            case 19:
+            case OPCODE_JMP:
                 _updateLabel(1);
 
-            // jc | als
-            case 20:
-            case 22:
+            case OPCODE_JC:
+            case OPCODE_ALS:
                 _updateLabel(2);
 
-            // replace Var or VarIdx
+            // replace Var. Var maybe inside nested Idx
             default:
-                // Var and VarIdx has same mem layout in union
                 for (int j = 1; j < Vec_count(&line->toks); j++){
-                    enum Tok_Type tt = Vec_at(&line->toks, j, Tok)->tokType;
-                    if (tt != Var && tt != VarIdx){
-                        continue;
+                    hi = NULL;
+                    Tok* tok = Vec_at(&line->toks, j, Tok);
+                    if (tok->tokType != Var) continue; 
+
+                    if (tok->tokType == Idx){
+                        struct Idx* idx = &tok->Idx;
+                        while(idx->type == Idx_Type_Idx) idx = idx->Idx;
+                        if (idx->type == Idx_Type_Num) continue;
+                        hi = &idx->Var;
                     }
 
-                    hi = &Vec_at(&line->toks, j, Tok)->Var;
+                    if (!hi) hi = &Vec_at(&line->toks, j, Tok)->Var;
                     idx = Hashmap_at(
                             m->varLookUp, 
                             Str_raw(&hi->sym), 

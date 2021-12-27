@@ -46,6 +46,17 @@ var(const Vec* v, Mem* m, Signal* s)
     return Ok;
 }
 
+Error
+loc(const Vec* v, Mem* m, Signal* s)
+{
+    argcGuard(v, 1);
+    long i;
+    try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &i));
+    Mem_mem_set(m, 0, i);
+    *s = Signal(None, 0);
+    return Ok;
+}
+
 #define mutVarIdx(v_, m_, s_, a_) \
     argcGuard(v_, 2); \
     HashIdx var; \

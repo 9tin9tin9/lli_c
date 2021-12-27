@@ -11,11 +11,53 @@
     } \
 }
 
+enum Opcode{
+    OPCODE_NOP,
+
+    OPCODE_MOV,
+    OPCODE_CPY,
+    OPCODE_VAR,
+    OPCODE_LOC,
+    OPCODE_INCR,
+    OPCODE_DECR,
+    OPCODE_ALLC,
+    
+    OPCODE_ADD,
+    OPCODE_SUB,
+    OPCODE_MUL,
+    OPCODE_DIV,
+    OPCODE_MOD,
+    
+    OPCODE_EQ,
+    OPCODE_NE,
+    OPCODE_GT,
+    OPCODE_LT,
+    
+    OPCODE_AND,
+    OPCODE_OR,
+    OPCODE_NOT,
+    
+    OPCODE_JMP,
+    OPCODE_JC,
+    OPCODE_LBL,
+    OPCODE_ALS,
+    
+    OPCODE_EXIT,
+    OPCODE_OPEN,
+    OPCODE_CLOSE,
+    OPCODE_READ,
+    OPCODE_WRITE,
+    
+    OPCODE_SRC,
+
+};
+
 defOp(nop);
 
 defOp(mov);
 defOp(cpy);
 defOp(var);
+defOp(loc);
 defOp(incr);
 defOp(decr);
 defOp(allc);

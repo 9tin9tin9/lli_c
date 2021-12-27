@@ -29,16 +29,29 @@ int
 Tok_eq(const Tok* left, const Tok* right)
 {
     int eq = left->tokType == right->tokType;
+    const struct Idx* leftIdx, *rightIdx;
     if (eq == 0) return 0;
     switch (left->tokType){
         case Num:
             return left->Num == right->Num;
         case Idx:
-            return left->Idx == right->Idx;
+            leftIdx = &left->Idx;
+            rightIdx = &right->Idx;
+            while(1){
+                if (leftIdx->type != rightIdx->type) return 0;
+                switch (leftIdx->type){
+                    case Idx_Type_Num:
+                        if (leftIdx->Num == rightIdx->Num) return 1;
+                    case Idx_Type_Var:
+                        return HashIdx_eq(&leftIdx->Var, &rightIdx->Var);
+                    case Idx_Type_Idx:
+                        leftIdx = leftIdx->Idx;
+                        rightIdx = rightIdx->Idx;
+                }
+                if (!(leftIdx && rightIdx)) return 0;
+            }
         case Var:
             return HashIdx_eq(&left->Var, &right->Var);
-        case VarIdx:
-            return HashIdx_eq(&left->VarIdx, &right->VarIdx);
         case Ltl:
             return strcmp(
                     Str_at(&left->Ltl, 0),
@@ -56,7 +69,17 @@ Tok_eq(const Tok* left, const Tok* right)
     case'5':case'6':case'7':case'8':case'9':
 
 // end_: where null pointer places
-#define shrinkStr(s_, start_, end_) \
+void shrinkStr(Str* s, size_t start, size_t end)
+{
+    *Str_at(s, end) = '\0';
+    size_t newSize = end - start;
+    char* new = malloc(newSize+1);
+    memcpy(new, Str_at(s, start), newSize+1);
+    free(s->array);
+    s->array = new;
+    s->size = newSize;
+}
+// #define shrinkStr(s_, start_, end_) \
 { \
     *Str_at(s, end_) = '\0'; \
     size_t newSize = end_ - start_; \
@@ -65,6 +88,49 @@ Tok_eq(const Tok* left, const Tok* right)
     free(s_->array); \
     s_->array = new; \
     s->size = newSize; \
+}
+
+// end: the last non-null character
+Error
+eatIdx(struct Idx* idx, Str* s, size_t start, size_t end)
+{
+    if (*Str_at(s, end) != ']')
+        return Error_UnterminatedIdx;
+    else if (end-start == 1)
+        return Error_EmptyIdx;
+    
+    switch (*Str_at(s, start+1)){
+        // Var
+        case '$':
+            if (end-start == 2)
+                return Error_MissingVarName;
+            
+            shrinkStr(s, start+2, end);
+            *idx = (struct Idx){
+                .type = Idx_Type_Var,
+                .Var = HashIdx_new(s, 0)
+            };
+            return Ok;
+        // Idx
+        case '[':
+            *idx = (struct Idx){
+                .type = Idx_Type_Idx,
+                .Idx = malloc(sizeof(struct Idx)),
+            };
+            return eatIdx(idx->Idx, s, start+1, end-1);
+        // Num
+        default:
+            shrinkStr(s, start+1, end);
+            char* ptr;
+            long num = strtol(Str_at(s, 0), &ptr, 10);
+            if (ptr == Str_at(s, 0))
+                return Error_ParseIdxError;
+            *idx = (struct Idx){
+                .type = Idx_Type_Num,
+                .Num = num,
+            };
+            return Ok;
+    }
 }
 
 Error
@@ -87,32 +153,10 @@ Tok_fromStr(Tok* tok, Str* s)
             *tok = (Tok){ Num, .Num = num };
             return Ok;
 
-        // Idx | VarIdx
+        // Idx
         case '[':
-            if (Str_back(s) != ']'){
-                return Error_UnterminatedIdx;
-            }else if (Str_len(s) == 2){
-                return Error_EmptyIdx;
-            }
-            if (*Str_at(s, 1) == '$'){
-                // VarIdx
-                if (Str_len(s) == 3){
-                    return Error_MissingVarName;
-                }
-                shrinkStr(s, 2, s->size-2);
-                *tok = Tok(VarIdx, HashIdx_new(s, 0));
-                return Ok;
-            }else{
-                // Idx
-                shrinkStr(s, 1, s->size-2);
-                char* ptr;
-                long idx = strtol(Str_at(s, 0), &ptr, 10);
-                if (ptr == Str_at(s, 0)){
-                    return Error_ParseIdxError;
-                }
-                *tok = Tok(Idx, idx);
-                return Ok;
-            }
+            *tok = Tok(Idx, {});
+            return eatIdx(&tok->Idx, s, 0, s->size-2);
 
         // Var
         case '$':
