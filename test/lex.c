@@ -11,7 +11,7 @@ fromStr()
     Tok_fromStr(&t, &Str_fromLtl("$asd"));
     REQUIRE(Tok_eq(&t, &(Tok){
                 Var,
-                .Var = HashIdx_new(&Str_fromLtl("asd"),0)
+                .Var = HashIdx_new(&Str_fromLtl("asd"), 0)
                 }));
 
     Tok_fromStr(&t, &Str_fromLtl("-123.345"));
@@ -23,13 +23,26 @@ fromStr()
     Tok_fromStr(&t, &Str_fromLtl("[-123]"));
     REQUIRE(Tok_eq(&t, &(Tok){
                 Idx,
-                .Idx = -123
+                .Idx = (struct Idx){.type = Idx_Type_Num, .Num = -123},
                 }));
 
     Tok_fromStr(&t, &Str_fromLtl("[$asd]"));
     REQUIRE(Tok_eq(&t, &(Tok){
-                VarIdx,
-                .VarIdx = HashIdx_new(&Str_fromLtl("asd"),0)
+                Idx,
+                .Idx = (struct Idx){
+                    .type = Idx_Type_Var,
+                    .Var = HashIdx_new(&Str_fromLtl("asd"), 0)},
+                }));
+
+    Tok_fromStr(&t, &Str_fromLtl("[[-123]]"));
+    REQUIRE(Tok_eq(&t, &(Tok){
+                Idx,
+                .Idx = (struct Idx){
+                    .type = Idx_Type_Idx,
+                    .Idx = memcpy(
+                        malloc(sizeof(struct Idx)),
+                        &(struct Idx){.type = Idx_Type_Num, .Num = -123},
+                        sizeof(struct Idx))},
                 }));
 
     Tok_fromStr(&t, &Str_fromLtl("\"asd\""));

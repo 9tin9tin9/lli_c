@@ -27,9 +27,6 @@ struct Idx{
 HashIdx 
 HashIdx_new(const Str* sym, size_t idx);
 
-void 
-HashIdx_del(HashIdx* hi);
-
 typedef struct {
     enum Tok_Type {
         Num, Idx, Var, 

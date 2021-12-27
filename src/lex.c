@@ -9,12 +9,6 @@ HashIdx_new(const Str* sym, size_t idx)
     };
 }
 
-void
-HashIdx_del(HashIdx* hi)
-{
-    Str_del(&hi->sym);
-}
-
 int
 HashIdx_eq(const HashIdx* left, const HashIdx* right)
 {
