@@ -26,5 +26,11 @@ int main(int argc, char** argv){
     exitIfError(Code_fromFile(fileName, &m, &c), &c);
     exitIfError(run(&m, &c), &c);
 
+    for (int i = 0; i < Mem_pmem_len(&m); i++){
+        double d;
+        Mem_mem_at(&m, i, &d);
+        printf("%d ", (int)d);
+    }
+
     return 0;
 }

@@ -138,6 +138,7 @@ Tok_getValue(const Tok* self, const Mem* m, double* d)
                 long i;
                 try(Mem_var_find(m, &idx->Var, &i));
                 try(Mem_mem_at(m, i, d));
+                layer++;
             }
 
             for (size_t i = 0; i < layer; i++){
@@ -197,14 +198,17 @@ Tok_getLoc(const Tok* self, Mem* m, long* l)
             if (idx->type == Idx_Type_Num){
                 *l = idx->Num;
             }else{
-                try(Mem_var_find(m, &idx->Var, l));
+                long i; double d;
+                try(Mem_var_find(m, &idx->Var, &i));
+                try(Mem_mem_at(m, i, &d));
+                if (d != (long)d) return Error_NotInteger;
+                *l = d;
             }
 
             for (long i = 0; i < layer-1; i++){
                 double d = *l;
                 try(Mem_mem_at(m, (long)d, &d));
-                if (d != (long)d)
-                    return Error_NotInteger;
+                if (d != (long)d) return Error_NotInteger;
                 *l = d;
             }
             return Ok;
