@@ -83,7 +83,7 @@ src: script_name(Sym)  # source another file, load labels and symbols, don't exe
 ```
 
 ## TODO
-- [ ] Implement all the functions listed in Predefined Function Section (Will not implement fork in near future)
+- [x] Implement all the functions listed in Predefined Function Section (Will not implement fork in near future)
 
 - [ ] Write more tests
 

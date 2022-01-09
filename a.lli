@@ -1,5 +1,13 @@
-allc: 5
-var: a, [1]
-mov: [1], 2
-mov: [2], 3
-loc: [$a]
+allc: 2
+var: counter, [1]
+var: ?, [0]
+
+lbl: loopStart
+add: $counter, 1
+mov: $counter, $?
+eq: $counter, 10000000
+jc: $?, exitLoop
+jmp: loopStart
+
+lbl: exitLoop
+print_num: 1, $counter

@@ -7,6 +7,9 @@ mov(const Vec* v, Mem* m, Signal* s)
     double val;
     try(Tok_getValue(Vec_at_unsafe(v, 1, Tok), m, &val));
     try(Tok_writeValue(Vec_at_unsafe(v, 0, Tok), m, val));
+    long idx;
+    const HashIdx hi = { .idx = 1 };
+    try(Mem_var_find(m, &hi, &idx));
     *s = Signal(None, 0);
     return Ok;
 }

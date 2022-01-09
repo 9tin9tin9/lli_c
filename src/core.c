@@ -30,7 +30,7 @@ createSymTable(size_t opcode, Mem* m, Code* c, Vec* toks)
     switch (opcode){
         case OPCODE_LBL:
         case OPCODE_ALS:
-            _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(c)));
+            _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(c)+1));
         
         case OPCODE_VAR:
             _findAndUpdate(varLookUp, Mem_var_add(m, 0));
@@ -93,42 +93,36 @@ updateSymIdx(Mem* m, Code* c)
         HashIdx* hi = &Vec_at(&line->toks, 0, Tok)->Sym;
 
         switch (hi->idx) {
-            case OPCODE_VAR:
-            case OPCODE_LBL:
-                break;
-
             case OPCODE_JMP:
                 _updateLabel(1);
 
             case OPCODE_JC:
             case OPCODE_ALS:
                 _updateLabel(2);
-
-            // replace Var. Var maybe inside nested Idx
-            default:
-                for (int j = 1; j < Vec_count(&line->toks); j++){
-                    hi = NULL;
-                    Tok* tok = Vec_at(&line->toks, j, Tok);
-                    if (tok->tokType != Var) continue; 
-
-                    if (tok->tokType == Idx){
-                        struct Idx* idx = &tok->Idx;
-                        while(idx->type == Idx_Type_Idx) idx = idx->Idx;
-                        if (idx->type == Idx_Type_Num) continue;
-                        hi = &idx->Var;
-                    }
-
-                    if (!hi) hi = &Vec_at(&line->toks, j, Tok)->Var;
-                    idx = Hashmap_at(
-                            m->varLookUp, 
-                            Str_raw(&hi->sym), 
-                            size_t);
-                    if (!idx)
-                        return Error_UndefinedVar;
-                    hi->idx = *idx;
-                }
-                break;
         }
+
+        // replace Var. Var maybe inside nested Idx
+            for (int j = 1; j < Vec_count(&line->toks); j++){
+                hi = NULL;
+                Tok* tok = Vec_at(&line->toks, j, Tok);
+                if (tok->tokType != Var) continue; 
+
+                if (tok->tokType == Idx){
+                    struct Idx* idx = &tok->Idx;
+                    while(idx->type == Idx_Type_Idx) idx = idx->Idx;
+                    if (idx->type == Idx_Type_Num) continue;
+                    hi = &idx->Var;
+                }
+
+                if (!hi) hi = &Vec_at(&line->toks, j, Tok)->Var;
+                idx = Hashmap_at(
+                        m->varLookUp, 
+                        Str_raw(&hi->sym), 
+                        size_t);
+                if (!idx)
+                    return Error_UndefinedVar;
+                hi->idx = *idx;
+            }
     }
     return Ok;
 }
