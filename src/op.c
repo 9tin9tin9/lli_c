@@ -39,7 +39,6 @@ op_initOpTable()
     addEntry(var);
     addEntry(loc);
     addEntry(incr);
-    addEntry(decr);
     addEntry(allc);
 
     addEntry(add);

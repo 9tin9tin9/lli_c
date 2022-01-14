@@ -7,9 +7,6 @@ mov(const Vec* v, Mem* m, Signal* s)
     double val;
     try(Tok_getValue(Vec_at_unsafe(v, 1, Tok), m, &val));
     try(Tok_writeValue(Vec_at_unsafe(v, 0, Tok), m, val));
-    long idx;
-    const HashIdx hi = { .idx = 1 };
-    try(Mem_var_find(m, &hi, &idx));
     *s = Signal(None, 0);
     return Ok;
 }
@@ -60,29 +57,22 @@ loc(const Vec* v, Mem* m, Signal* s)
     return Ok;
 }
 
-#define mutVarIdx(v_, m_, s_, a_) \
-    argcGuard(v_, 2); \
-    HashIdx var; \
-    size_t incrVal; \
-    try(Tok_getSym(Vec_at_unsafe(v_, 0, Tok), &var)); \
-    try(Tok_getUint(Vec_at_unsafe(v_, 1, Tok), m_, &incrVal)); \
-    long varIdx; \
-    try(Mem_var_find(m_, &var, &varIdx)); \
-    a_(&varIdx, incrVal); \
-    Mem_var_set(m_, var.idx, varIdx); \
-    *s_ = Signal(None, 0); \
-    return Ok;
-
 Error
 incr(const Vec* v, Mem* m, Signal* s)
 {
-    mutVarIdx(v, m, s, idxIncr);
-}
-
-Error
-decr(const Vec* v, Mem* m, Signal* s)
-{
-    mutVarIdx(v, m, s, idxDecr);
+    argcGuard(v, 2);
+    long incrVal;
+    Tok* v0 = Vec_at_unsafe(v, 0, Tok);
+    try(Tok_getInt(Vec_at_unsafe(v, 1, Tok), m, &incrVal));
+    if (v0->tokType != Var){
+        return Error_WrongArgType;
+    }
+    long varIdx;
+    try(Mem_var_find(m, &v0->Var, &varIdx));
+    idxIncr(&varIdx, incrVal);
+    Mem_var_set(m, v0->Var.idx, varIdx);
+    *s = Signal(None, 0);
+    return 0;
 }
 
 Error

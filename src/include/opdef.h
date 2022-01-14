@@ -19,7 +19,6 @@ enum Opcode{
     OPCODE_VAR,
     OPCODE_LOC,
     OPCODE_INCR,
-    OPCODE_DECR,
     OPCODE_ALLC,
     
     OPCODE_ADD,
