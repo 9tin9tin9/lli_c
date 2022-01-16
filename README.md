@@ -63,7 +63,6 @@ not: bool(Value)  # !
 jmp: loc(Sym | Value)  # unconditional jmp, accepts label or line number(uint)
 jc: cond(Value), lbl(Sym)  # jump if cond is true
 lbl: lbl(Sym)  # set label.
-curr  # write current line number to [0]
 
 # sys
 exit: exit_code(Value)
