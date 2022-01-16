@@ -118,10 +118,8 @@ Mem_var_set(Mem* self, size_t i, long idx)
 Error
 Mem_var_find(const Mem* self, const HashIdx* hi, long* des)
 {
-    long* elem = Vec_at(&self->var, hi->idx, long);
-    if (!elem)
-        return Error_UndefinedVar;
-    *des = *elem;
+    // hi->idx should have been assigned during preprocessing
+    *des = *Vec_at_unsafe(&self->var, hi->idx, long);
     return Ok;
 }
 

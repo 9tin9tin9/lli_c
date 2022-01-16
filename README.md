@@ -21,7 +21,7 @@
     - Sym: `[^\s0-9$#"\[\]:,]+`
     - Ltl: String literal wrapped in double quotes
 - Args:
-    - Value: {Num, Idx, Var}
+    - Value: {Num, Idx, Var, Lbl(line number)}
     - Ptr: {Idx, Var, Ltl}
     - Writable Ptr: ptr with positive index
         - Ltl returns negative ptr, which is unwritable
@@ -60,10 +60,10 @@ or: left(Value), right(Value)  # ||
 not: bool(Value)  # !
 
 # control flow
-jmp: lbl(Sym)  # unconditional jmp
+jmp: loc(Sym | Value)  # unconditional jmp, accepts label or line number(uint)
 jc: cond(Value), lbl(Sym)  # jump if cond is true
 lbl: lbl(Sym)  # set label.
-als: als(Sym) lbl(Sym)  # set alias during runtime, act as function pointer. als = lbl
+curr  # write current line number to [0]
 
 # sys
 exit: exit_code(Value)

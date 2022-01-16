@@ -9,24 +9,21 @@
 
 typedef struct{
     enum Type {
-        None,
-        SetLbl,
-        SetAls,
-        Jmp,
-        Src,
+        Signal_None,
+        Signal_SetLbl,
+        Signal_Curr,
+        Signal_Jmp,
+        Signal_Src,
     }type;
     union{
         char None;
         size_t SetLbl;
-        struct{
-            size_t alias;
-            size_t loc;
-        }SetAls;
+        char Curr;
         size_t Jmp;
         Str Src;
     };
 }Signal;
-#define Signal(type_, ...) ((Signal){type_, .type_ = __VA_ARGS__})
+#define Signal(type_, ...) ((Signal){Signal_##type_, .type_ = __VA_ARGS__})
 Error Signal_respond(const Signal*, Mem*, Code*);
 
 typedef Error (*OpFunc)(const Vec*, Mem*, Signal*);

@@ -12,8 +12,7 @@ math_parseArg(const Vec* v, Mem* m, double* left, double* right)
 #define math(op_, v_, m_, s_) \
     double left, right; \
     try(math_parseArg(v_, m_, &left, &right)); \
-    double result = left op_ right; \
-    Mem_mem_set(m_, 0, result); \
+    Mem_mem_set(m_, 0, left op_ right); \
     *s_ = Signal(None, 0); \
     return Ok;
 

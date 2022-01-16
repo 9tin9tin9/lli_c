@@ -77,8 +77,8 @@ static inline void Vec_del(Vec* v_) {
 }
 
 // return NULL if pos out of range
-static inline void* _Vec_at(const Vec* v_, long p_) {
-    if (p_ < 0 || p_ >= (v_)->size) return NULL;
+static inline void* _Vec_at(const Vec* v_, size_t p_) {
+    if (p_ >= v_->size) return NULL;
     return (void*)(v_->array+p_*v_->elem_size);
 }
 

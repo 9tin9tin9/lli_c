@@ -44,7 +44,7 @@ sdbm(const char* str, size_t size)
 typedef unsigned long (*Hashfunc)(const char*, size_t);
 
 #ifndef HASHMAP_DEFAULT_SIZE
-#define HASHMAP_DEFAULT_SIZE 10000
+#define HASHMAP_DEFAULT_SIZE 95791
 #endif
 
 #ifndef HASHMAP_GROWTH_FACTOR

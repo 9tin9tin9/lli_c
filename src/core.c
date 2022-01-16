@@ -29,7 +29,6 @@ createSymTable(size_t opcode, Mem* m, Code* c, Vec* toks)
     size_t* idx;
     switch (opcode){
         case OPCODE_LBL:
-        case OPCODE_ALS:
             _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(c)+1));
         
         case OPCODE_VAR:
@@ -97,7 +96,6 @@ updateSymIdx(Mem* m, Code* c)
                 _updateLabel(1);
 
             case OPCODE_JC:
-            case OPCODE_ALS:
                 _updateLabel(2);
         }
 

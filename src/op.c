@@ -2,6 +2,7 @@
 #include "include/opdef.h"
 #include "include/core.h"
 #include <stdio.h>
+#include <math.h>
 
 #define addEntry(op) { \
     Vec_push(&funcVec, &op); \
@@ -59,7 +60,8 @@ op_initOpTable()
     addEntry(jmp);
     addEntry(jc);
     addEntry(lbl);
-    addEntry(als);
+    addEntry(curr);
+    addEntry(res);
 
     addEntryAlternate(exit);
     addEntryAlternate(open);
@@ -90,18 +92,18 @@ Error
 Signal_respond(const Signal* self, Mem* m, Code* c)
 {
     switch (self->type) {
-        case None:
+        case Signal_None:
             break;
-        case Jmp:
+        case Signal_Jmp:
             Code_ptr_set(c, self->Jmp);
             return Ok;
-        case SetLbl:
+        case Signal_SetLbl:
             Mem_label_set(m, self->SetLbl, Code_ptr(c)+1);
             break;
-        case SetAls:
-            Mem_label_set(m, self->SetAls.alias, self->SetAls.loc);
+        case Signal_Curr:
+            Mem_mem_set(m, 0, (double)Code_ptr(c));
             break;
-        case Src:
+        case Signal_Src:
             {
             Code src = Code_new();
             try(Code_fromFile(self->Src.array, m, &src));
@@ -123,8 +125,8 @@ Tok_getValue(const Tok* self, const Mem* m, double* d)
             *d = self->Num;
             return Ok;
 
-        case Idx:
-            ;const struct Idx* idx = &self->Idx;
+        case Idx: {
+            const struct Idx* idx = &self->Idx;
             size_t layer = 0;
             while(idx->type == Idx_Type_Idx){
                 idx = idx->Idx;
@@ -146,12 +148,21 @@ Tok_getValue(const Tok* self, const Mem* m, double* d)
                 try(Mem_mem_at(m, (long)*d, d));
             }
             return Ok;
+            }
 
-        case Var:
-            // Find where Var points to
-            ;long i;
+        case Var: {
+            // Find where Var points to 
+            long i;
             try(Mem_var_find(m, &self->Var, &i));
             return Mem_mem_at(m, i, d);
+            }
+
+        case Sym: {
+            size_t loc;
+            try(Mem_label_find(m, &self->Sym, &loc));
+            *d = loc;
+            return Ok;
+            }
 
         default:
             return Error_WrongArgType;
@@ -163,10 +174,10 @@ Tok_getUint(const Tok* self, const Mem* m, size_t* i)
 {
     double f;
     try(Tok_getValue(self, m, &f));
-    if (f != (unsigned long)f){
+    *i = rint(f);
+    if (*i != f){
         return Error_NotPositiveInteger;
     }
-    *i = (size_t)f;
     return Ok;
 }
 
@@ -175,10 +186,10 @@ Tok_getInt(const Tok* self, const Mem* m, long *i)
 {
     double f;
     try(Tok_getValue(self, m, &f));
-    if (f != (long)f){
+    *i = rint(f);
+    if (*i != f){
         return Error_NotInteger;
     }
-    *i = (long)f;
     return Ok;
 }
 
