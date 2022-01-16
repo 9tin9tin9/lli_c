@@ -44,6 +44,5 @@ typedef enum{
 void Error_print(Error, void*, int);
 
 #define try(a_) { Error r = (a_); if (r) return r; }
-// #define try(a_) a_
 
 #endif

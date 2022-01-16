@@ -39,22 +39,32 @@ lbl(const Vec* v, Mem* m, Signal* s)
 }
 
 Error
-curr(const Vec* v, Mem* m, Signal* s)
+call(const Vec* v, Mem* m, Signal* s)
 {
-    argcGuard(v, 0);
-    *s = Signal(Curr, 0);
+    argcGuard(v, 2);
+    Tok* idx = Vec_at_unsafe(v, 0, Tok);
+    size_t val;
+    double curr;
+    size_t loc;
+    try(Tok_getUint(idx, m, &val));
+    try(Tok_writeValue(idx, m, ++val));
+    try(Mem_mem_at(m, -1, &curr));
+    try(Mem_mem_set(m, val, curr+1));
+    try(Tok_getUint(Vec_at_unsafe(v, 1, Tok), m, &loc));
+    *s = Signal(Jmp, loc);
     return Ok;
 }
 
 Error
-res(const Vec* v, Mem* m, Signal* s)
+ret(const Vec* v, Mem* m, Signal* s)
 {
-    argcGuard(v, 1)
-    HashIdx label;
-    size_t loc;
-    try(Tok_getSym(Vec_at_unsafe(v, 0, Tok), &label));
-    try(Mem_label_find(m, &label, &loc));
-    Mem_mem_set(m, 0, (double)loc);
-    *s = Signal(None, 0);
+    argcGuard(v, 1);
+    Tok* idx = Vec_at_unsafe(v, 0, Tok);
+    size_t val;
+    double loc;
+    try(Tok_getUint(idx, m, &val));
+    try(Mem_mem_at(m, val, &loc));
+    try(Tok_writeValue(idx, m, --val));
+    *s = Signal(Jmp, loc);
     return Ok;
 }

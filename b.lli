@@ -2,42 +2,31 @@ allc: 100
 
 # 10 registers: [0] to [9]
 var: stack, [10]
+mov: $stack, 10
 jmp: main
 
-# int sum(int l, int r)
+# int sum(int, int)
 lbl: sum
 add: [1], [2]
-incr: $stack, -1
-jmp: $stack
+ret: $stack
 
 lbl: main
-# var a = 0
-var: a, $stack
-mov: $a, 0
-incr: $stack, 1
 # var i = 0
-var: i, $stack
-mov: $i, 0
-incr: $stack, 1
-
+push: $stack, 0
+var: i, [$stack]
 # loop {
-lbl: startLoop
-# a = sum(a, 5)
-mov: [1], $a
-mov: [2], 5
-add: [-1], 4
-mov: $stack, [0]
-incr: $stack, 1
-jmp: sum
-mov: $a, [0]
-# i = i + 1
-add: $i, 1
-mov: $i, [0]
-# if (i == 10) break;
-eq: $i, 10000000
-jc: [0], endLoop
-jmp: startLoop
+    lbl: loop_start
+    # i = sum(i, 1)
+    mov: [1], $i
+    mov: [2], 1
+    call: $stack, sum
+    mov: $i, [0]
+    # if (i == 10000000) break
+    eq: $i, 10000000
+    jc: [0], loop_end
+    jmp: loop_start
 # }
-lbl: endLoop
+lbl: loop_end
 
-print_num: 1, $a
+# print(i)
+print_num: 1, $i

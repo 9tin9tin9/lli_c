@@ -37,8 +37,9 @@ mov: des(WPtr), src(Value)  # assignment, read value
 cpy: des(WPtr), src(Ptr), size(Value)  # memcpy. When src = Ltl, a new ltl is created and its idx is used as src idx
 var: name(Sym), idx(Ptr)  # Creates or update $name with index = idx
 loc: ptr(Ptr)  # writes the ptr as value to [0]
-incr: var(Var), num(Value)  # Used to iterate->read/write pmem, potentially can be used to do stack operations.
 allc: size(Value)  # Push slots to pmem
+push: idx(WPtr), val(Value)  # increments idx and then assigns val to idx
+pop: idx(WPtr)  # decrements pointer
 
 # maths, [0] is set as result
 # args can be index, var or Num
@@ -47,6 +48,8 @@ sub: left(Value), right(Value)  # -
 mul: left(Value), right(Value)  # *
 div: left(Value), right(Value)  # /
 mod: left(Value), right(Value)  # %
+inc: idx(WPtr)  # ++
+dec: idx(WPtr)  # --
 
 # cmp, [0] is set to either 0 or 1
 eq: left(Value), right(Value)  # ==
@@ -63,6 +66,8 @@ not: bool(Value)  # !
 jmp: loc(Sym | Value)  # unconditional jmp, accepts label or line number(uint)
 jc: cond(Value), lbl(Sym)  # jump if cond is true
 lbl: lbl(Sym)  # set label.
+call: idx(WPtr), lbl(Sym)  # increments idx, assigns [-1]+1 to idx, and jumps to lbl
+ret: idx(WPtr)  # decrements pointer by one, and jumps to idx
 
 # sys
 exit: exit_code(Value)

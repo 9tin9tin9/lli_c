@@ -52,3 +52,26 @@ mod(const Vec* v, Mem* m, Signal* s)
     *s = Signal(None, 0);
     return Ok;
 }
+
+#define incrDecr(v, m, s, op) \
+    argcGuard(v, 1); \
+    double val; \
+    long loc; \
+    try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &loc)); \
+    try(Mem_mem_at(m, loc, &val)); \
+    val op; \
+    try(Mem_mem_set(m, loc, val)); \
+    *s = Signal(None, 0); \
+    return Ok; \
+
+Error
+inc(const Vec* v, Mem* m, Signal* s)
+{
+    incrDecr(v, m, s, ++);
+}
+
+Error
+dec(const Vec* v, Mem* m, Signal* s)
+{
+    incrDecr(v, m, s, --);
+}

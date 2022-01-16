@@ -39,14 +39,17 @@ op_initOpTable()
     addEntry(cpy);
     addEntry(var);
     addEntry(loc);
-    addEntry(incr);
     addEntry(allc);
+    addEntry(push);
+    addEntry(pop);
 
     addEntry(add);
     addEntry(sub);
     addEntry(mul);
     addEntryAlternate(div);
     addEntry(mod);
+    addEntry(inc);
+    addEntry(dec);
 
     addEntry(eq);
     addEntry(ne);
@@ -60,6 +63,8 @@ op_initOpTable()
     addEntry(jmp);
     addEntry(jc);
     addEntry(lbl);
+    addEntry(call);
+    addEntry(ret);
 
     addEntryAlternate(exit);
     addEntryAlternate(open);
@@ -94,7 +99,6 @@ Signal_respond(const Signal* self, Mem* m, Code* c)
             break;
         case Signal_Jmp:
             Code_ptr_set(c, self->Jmp);
-            Mem_mem_set(m, -1, Code_ptr(c));
             return Ok;
         case Signal_SetLbl:
             Mem_label_set(m, self->SetLbl, Code_ptr(c)+1);
@@ -114,7 +118,6 @@ Signal_respond(const Signal* self, Mem* m, Code* c)
             break;
     }
     Code_ptr_incr(c);
-    Mem_mem_set(m, -1, Code_ptr(c));
     return Ok;
 }
 

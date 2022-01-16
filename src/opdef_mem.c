@@ -58,24 +58,6 @@ loc(const Vec* v, Mem* m, Signal* s)
 }
 
 Error
-incr(const Vec* v, Mem* m, Signal* s)
-{
-    argcGuard(v, 2);
-    long incrVal;
-    Tok* v0 = Vec_at_unsafe(v, 0, Tok);
-    try(Tok_getInt(Vec_at_unsafe(v, 1, Tok), m, &incrVal));
-    if (v0->tokType != Var){
-        return Error_WrongArgType;
-    }
-    long varIdx;
-    try(Mem_var_find(m, &v0->Var, &varIdx));
-    idxIncr(&varIdx, incrVal);
-    Mem_var_set(m, v0->Var.idx, varIdx);
-    *s = Signal(None, 0);
-    return 0;
-}
-
-Error
 allc(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 1);
@@ -85,7 +67,34 @@ allc(const Vec* v, Mem* m, Signal* s)
     for (int i = 0; i < sizeS; i++){
         Mem_pmem_push(m, 0);
     }
-    try(Mem_mem_set(m, 0, sizeS));
+    *s = Signal(None, 0);
+    return Ok;
+}
+
+Error
+push(const Vec* v, Mem* m, Signal* s)
+{
+    argcGuard(v, 2);
+    size_t ptr;
+    double val;
+    try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &ptr));
+    try(Tok_writeValue(Vec_at_unsafe(v, 0, Tok), m, ++ptr));
+    try(Tok_getValue(Vec_at_unsafe(v, 1, Tok), m, &val));
+    try(Mem_mem_set(m, ptr, val));
+    *s = Signal(None, 0);
+    return Ok;
+}
+
+Error
+pop(const Vec* v, Mem* m, Signal* s)
+{
+    argcGuard(v, 1);
+    size_t ptr;
+    double val;
+    try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &ptr));
+    try(Mem_mem_at(m, ptr, &val));
+    Mem_mem_set(m, 0, val);
+    try(Tok_writeValue(Vec_at_unsafe(v, 0, Tok), m, --ptr));
     *s = Signal(None, 0);
     return Ok;
 }

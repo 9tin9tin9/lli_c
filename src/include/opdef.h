@@ -18,14 +18,17 @@ enum Opcode{
     OPCODE_CPY,
     OPCODE_VAR,
     OPCODE_LOC,
-    OPCODE_INCR,
     OPCODE_ALLC,
+    OPCODE_PUSH,
+    OPCODE_POP,
     
     OPCODE_ADD,
     OPCODE_SUB,
     OPCODE_MUL,
     OPCODE_DIV,
     OPCODE_MOD,
+    OPCODE_INC,
+    OPCODE_DEC,
     
     OPCODE_EQ,
     OPCODE_NE,
@@ -39,6 +42,8 @@ enum Opcode{
     OPCODE_JMP,
     OPCODE_JC,
     OPCODE_LBL,
+    OPCODE_CALL,
+    OPCODE_RET,
     
     OPCODE_EXIT,
     OPCODE_OPEN,
@@ -56,14 +61,17 @@ defOp(mov);
 defOp(cpy);
 defOp(var);
 defOp(loc);
-defOp(incr);
 defOp(allc);
+defOp(push);
+defOp(pop);
 
 defOp(add);
 defOp(sub);
 defOp(mul);
 defOp(div_);
 defOp(mod);
+defOp(inc);
+defOp(dec);
 
 defOp(eq);
 defOp(ne);
@@ -77,6 +85,8 @@ defOp(not);
 defOp(jmp);
 defOp(jc);
 defOp(lbl);
+defOp(call);
+defOp(ret);
 
 defOp(exit_);
 defOp(open_);
