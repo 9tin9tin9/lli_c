@@ -68,6 +68,7 @@ preprocess(Mem* m, Code* c, Vec* toks)
     {  \
         Tok* t = Vec_at(&line->toks, _i, Tok);  \
         if (!t) return Error_WrongArgCount;  \
+        if (t->tokType != Sym) continue;  \
         hi = &t->Sym;  \
     }  \
     hi = &Vec_at(&line->toks, _i, Tok)->Sym;  \
@@ -86,8 +87,8 @@ updateSymIdx(Mem* m, Code* c)
 {
     const size_t codeLen = Code_len(c);
     size_t* idx;
-
-    for (int i = 0; i < codeLen; i++){
+    Code_ptr_set(c, 0);
+    for (int i = 0; i < codeLen; i++, Code_ptr_incr(c)){
         Line* line = Code_at(c, i);
         HashIdx* hi = &Vec_at(&line->toks, 0, Tok)->Sym;
 
@@ -122,6 +123,7 @@ updateSymIdx(Mem* m, Code* c)
                 hi->idx = *idx;
             }
     }
+    Code_ptr_set(c, 0);
     return Ok;
 }
 

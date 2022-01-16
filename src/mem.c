@@ -8,7 +8,7 @@ Mem_new()
     fd[0] = fd[1] = fd[2] = true;
     return (Mem){
         .pmem = Vec_from(double, 0.0),
-        .nmem = Vec_from(double, 0.0),
+        .nmem = Vec(double),
         .varLookUp = Hashmap(),
         .var = Vec(long),
         .labelLookUp = Hashmap(),
@@ -68,7 +68,7 @@ Mem_pmem_push(Mem* self, double v)
 Error
 Mem_nmem_at(const Mem* self, size_t i, double* des)
 {
-    double* slot = Vec_at(&self->nmem, i, double);
+    double* slot = Vec_at(&self->nmem, i-1, double);
     if (!slot)
         return Error_InvalidMemAccess;
     *des = *slot;
@@ -78,7 +78,7 @@ Mem_nmem_at(const Mem* self, size_t i, double* des)
 Error
 Mem_nmem_set(Mem* self, size_t i, double v)
 {
-    double* slot = Vec_at(&self->nmem, i, double);
+    double* slot = Vec_at(&self->nmem, i-1, double);
     if (!slot)
         return Error_InvalidMemAccess;
     *slot = v;

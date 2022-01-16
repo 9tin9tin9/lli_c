@@ -60,8 +60,6 @@ op_initOpTable()
     addEntry(jmp);
     addEntry(jc);
     addEntry(lbl);
-    addEntry(curr);
-    addEntry(res);
 
     addEntryAlternate(exit);
     addEntryAlternate(open);
@@ -96,22 +94,27 @@ Signal_respond(const Signal* self, Mem* m, Code* c)
             break;
         case Signal_Jmp:
             Code_ptr_set(c, self->Jmp);
+            Mem_mem_set(m, -1, Code_ptr(c));
             return Ok;
         case Signal_SetLbl:
             Mem_label_set(m, self->SetLbl, Code_ptr(c)+1);
             break;
         case Signal_Curr:
-            Mem_mem_set(m, 0, (double)Code_ptr(c));
+            Mem_mem_set(m, 0, Code_ptr(c));
             break;
         case Signal_Src:
             {
+            double oldPtr;
+            Mem_mem_at(m, -1, &oldPtr);
             Code src = Code_new();
             try(Code_fromFile(self->Src.array, m, &src));
             try(run(m, &src));
+            Mem_mem_set(m, -1, oldPtr);
             }
             break;
     }
     Code_ptr_incr(c);
+    Mem_mem_set(m, -1, Code_ptr(c));
     return Ok;
 }
 

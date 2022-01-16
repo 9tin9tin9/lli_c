@@ -17,7 +17,7 @@ passLexAndExec()
     Error r = op_exec(&m, &c, &s);
 
     REQUIRE(r == Ok);
-    REQUIRE(s.type == None);
+    REQUIRE(s.type == Signal_None);
 }
 
 int main(){

@@ -50,7 +50,7 @@ nmem_set()
     REQUIRE(r == Error_InvalidMemAccess);
     Vec_push(&m.nmem, 0.0);
     r = Mem_nmem_set(&m, 1, 10.0);
-    REQUIRE(*Vec_at(&m.nmem, 1, double) == 10.0);
+    REQUIRE(*Vec_at(&m.nmem, 0, double) == 10.0);
 }
 
 void

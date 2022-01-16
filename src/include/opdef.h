@@ -39,8 +39,6 @@ enum Opcode{
     OPCODE_JMP,
     OPCODE_JC,
     OPCODE_LBL,
-    OPCODE_CURR,
-    OPCODE_RES,
     
     OPCODE_EXIT,
     OPCODE_OPEN,
@@ -59,7 +57,6 @@ defOp(cpy);
 defOp(var);
 defOp(loc);
 defOp(incr);
-defOp(decr);
 defOp(allc);
 
 defOp(add);
@@ -80,8 +77,6 @@ defOp(not);
 defOp(jmp);
 defOp(jc);
 defOp(lbl);
-defOp(curr);
-defOp(res);
 
 defOp(exit_);
 defOp(open_);

@@ -31,7 +31,7 @@ print_msg(){
 }
 
 compile_and_run(){
-    clang -g -o $n ../target/obj/*.o $n.c -fsanitize=address -ftrapv -pedantic 2>&1
+    gcc-11 -g -o $n ../target/obj/*.o $n.c 2>&1
     if [[ $? != 0 ]]; then
         printf "$compile_output"
         print_msg $1 $cannot_compile

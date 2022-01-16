@@ -10,7 +10,7 @@
     bool b = (bool_);\
     TOTAL_RESULT = TOTAL_RESULT && b; \
     if (!b) { \
-        printf("%s failed\n", #bool_); \
+        printf("In %s: %s failed\n", __func__, #bool_); \
     } \
 }
 
