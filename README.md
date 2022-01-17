@@ -2,12 +2,13 @@
 
 ## Ideas:
 
-- Memory slots: 1 slot store a `double`. Functions determine how to interprete double
-- [0] is reserved for writing output, [1] is reserved for writing system error code
+- Memory slots: 1 slot store a `union{ double, long }`. Functions determine when to accept `long` or `double`
+- [0] is reserved for writing output, [1] is reserved for writing system error code, [-1] is reserved for writing current code address(line number)
 - Primitive type: Num, Idx, Var, Lbl, Ltl
 - No concept of Stack. Plain memory: Positive Memory and Negative Memory
     - Positive Memory(pmem): idx>=0, stores modifiable data
     - Negative Memory(nmem): idx<0, store and referenced by string literals, read only, set by interpreter
+- Stack can be simulated by `push pop call ret` functions
 
 ## Syntax:
 
@@ -87,6 +88,8 @@ src: script_name(Sym)  # source another file, load labels and symbols, don't exe
 
 ## TODO
 - [x] Implement all the functions listed in Predefined Function Section (Will not implement fork in near future)
+
+- [ ] Implement Character
 
 - [ ] Write more tests
 

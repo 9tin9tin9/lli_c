@@ -4,7 +4,7 @@ Error
 mov(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 2);
-    double val;
+    Value val;
     try(Tok_getValue(Vec_at_unsafe(v, 1, Tok), m, &val));
     try(Tok_writeValue(Vec_at_unsafe(v, 0, Tok), m, val));
     *s = Signal(None, 0);
@@ -22,7 +22,7 @@ cpy(const Vec* v, Mem* m, Signal* s)
     size_t size;
     try(Tok_getUint(Vec_at_unsafe(v, 2, Tok), m, &size));
 
-    double val;
+    Value val;
     for (size_t i = 0; i < size; i++){
         try(Mem_mem_at(m, src, &val));
         try(Tok_writeValue(&Tok(Idx, des), m, val));
@@ -52,7 +52,7 @@ loc(const Vec* v, Mem* m, Signal* s)
     argcGuard(v, 1);
     long i;
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &i));
-    Mem_mem_set(m, 0, i);
+    Mem_mem_set(m, 0, Value('L', i));
     *s = Signal(None, 0);
     return Ok;
 }
@@ -65,7 +65,7 @@ allc(const Vec* v, Mem* m, Signal* s)
     size_t sizeS;
     try(Tok_getUint(sizeTok, m, &sizeS));
     for (int i = 0; i < sizeS; i++){
-        Mem_pmem_push(m, 0);
+        Mem_pmem_push(m, Value('L', 0));
     }
     *s = Signal(None, 0);
     return Ok;
@@ -76,9 +76,10 @@ push(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 2);
     size_t ptr;
-    double val;
+    Value val;
     try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &ptr));
-    try(Tok_writeValue(Vec_at_unsafe(v, 0, Tok), m, ++ptr));
+    ptr++;
+    try(Tok_writeValue(Vec_at_unsafe(v, 0, Tok), m, Value('L', ptr)));
     try(Tok_getValue(Vec_at_unsafe(v, 1, Tok), m, &val));
     try(Mem_mem_set(m, ptr, val));
     *s = Signal(None, 0);
@@ -90,11 +91,12 @@ pop(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 1);
     size_t ptr;
-    double val;
+    Value val;
     try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &ptr));
     try(Mem_mem_at(m, ptr, &val));
     Mem_mem_set(m, 0, val);
-    try(Tok_writeValue(Vec_at_unsafe(v, 0, Tok), m, --ptr));
+    ptr--;
+    try(Tok_writeValue(Vec_at_unsafe(v, 0, Tok), m, Value('L', ptr)));
     *s = Signal(None, 0);
     return Ok;
 }

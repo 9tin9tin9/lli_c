@@ -104,7 +104,7 @@ static inline int _Vec_push(Vec* v_, const void* elem, size_t elem_size) {
     return 1;
 }
 
-#define Vec_push(vec_, elem_) _Vec_push(vec_, (__typeof__((elem_))[]){(elem_)}, sizeof(__typeof__((elem_)))) 
+#define Vec_push(vec_, ...) _Vec_push(vec_, (__typeof__(__VA_ARGS__)[]){(__VA_ARGS__)}, sizeof(__typeof__(__VA_ARGS__))) 
 
 static inline void Vec_pop(Vec* v_) {
     v_->size--;

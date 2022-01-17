@@ -7,6 +7,30 @@
 #include "error.h"
 
 typedef struct {
+    enum {
+        Double = 'D', Long = 'L'
+    }type;
+    union{
+        double Double;
+        long Long;
+    };
+}Value;
+
+static inline Value Value_(char type, void* val)
+{
+    return type == 'D'?
+        (Value){.type = 'D', .Double = *(double*)val} :
+        (Value){.type = 'L', .Long = *(long*)val};
+}
+#define Value(t_, v_) Value_(t_, (__typeof__(v_)[]){v_})
+static inline int Value_eq(const Value* l, const Value* r)
+{
+    return l->type == r->type && l->Double == r->Double;
+}
+long* Value_getL(Value* v);
+double* Value_getD(Value* v);
+
+typedef struct {
     Str sym;
     size_t idx;
 }HashIdx;
@@ -33,7 +57,7 @@ typedef struct {
         Ltl, Sym, Eof
     }tokType;
     union {
-        double Num;
+        Value Num;
         struct Idx Idx;
         HashIdx Var;
         Str Ltl;

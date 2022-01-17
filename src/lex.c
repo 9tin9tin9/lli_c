@@ -1,6 +1,20 @@
 #include "include/lex.h"
 #include "include/error.h"
 
+long* Value_getL(Value* v)
+{
+    return v->type == 'L'?
+        &v->Long :
+        NULL;
+}
+
+double* Value_getD(Value* v)
+{
+    return v->type == 'D'?
+        &v->Double :
+        NULL;
+}
+
 HashIdx
 HashIdx_new(const Str* sym, size_t idx)
 {
@@ -27,7 +41,7 @@ Tok_eq(const Tok* left, const Tok* right)
     if (eq == 0) return 0;
     switch (left->tokType){
         case Num:
-            return left->Num == right->Num;
+            return Value_eq(&left->Num, &right->Num);
         case Idx:
             leftIdx = &left->Idx;
             rightIdx = &right->Idx;
@@ -134,7 +148,12 @@ Tok_fromStr(Tok* tok, Str* s)
             if (ptr == Str_at(s, 0)){
                 return Error_ParseNumError;
             }
-            *tok = (Tok){ Num, .Num = num };
+            long lnum = num;
+            if (lnum == num){
+                *tok = (Tok){ Num, .Num = Value(Long, lnum) };
+            }else{
+                *tok = (Tok){ Num, .Num = Value(Double, num) };
+            }
             return Ok;
 
         // Idx

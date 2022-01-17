@@ -31,14 +31,14 @@ write_(const Vec* v, Mem* m, Signal* s)
     size_t i;
     for (i = 0; i < size; i++)
     {
-        double value;
+        Value value;
         try(Mem_mem_at(m, srcIdx, &value));
-        char ch = value;
+        char ch = value.Long;
         if (!fwrite(&ch, sizeof(char), 1, f))
             return Error_IoError;
         idxIncr(&srcIdx, 1);
     }
-    Mem_mem_set(m, 0, i);
+    Mem_mem_set(m, 0, Value('L', i));
     *s = Signal(None, 0);
     return Ok;
 }
@@ -65,11 +65,10 @@ read_(const Vec* v, Mem* m, Signal* s)
     }
     size_t i;
     for (i = 0; i < readSize && i < size; i++){
-        double c = buf[i];
+        Value c = Value('L', buf[i]);
         try(Mem_mem_set(m, desIdx+i, c));
     }
-    try(Mem_mem_set(m, desIdx+i, 0));
-    Mem_mem_set(m, 0, i+1);
+    Mem_mem_set(m, 0, Value('L', i));
     *s = Signal(None, 0);
     return Ok;
 }
@@ -107,11 +106,38 @@ parseOpenOption(size_t oVal, int* oflag)
     return Ok;
 }
 
+// Open file and set [0] to fd
+//      open: name(Ptr | Sym), option(Value)
+//
+// Open options: number consisting 6 or less digits
+//
+//  _ _ _ _ _ _
+//  6 5 4 3 2 1
+//
+//  1) read
+//  2) write
+//  3) append
+//  4) truncate
+//  5) create
+//  6) create_new
+//
+//  All digits should be either be 0 or 1, representing boolean value.
+//  Boolean values will be passed to std::fs::OpenOptions.
+//  Read rust docs for more details about each option.
+//
+//  Example: opening text.txt in read only mode
+//      open:"text.txt",1
+//
+//  Example: opening text.txt in write-only mode, 
+//           create file if it does not exists,
+//           and will truncate it if it does.
+//      open:"text.txt",11010
+//
 Error
 open_(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 2);
-    Str name;
+    Str name = Str();
     Tok t = *Vec_at_unsafe(v, 0, Tok);
     if (t.tokType == Sym){
         // borrow
@@ -134,7 +160,7 @@ open_(const Vec* v, Mem* m, Signal* s)
         return Error_ExceedOpenLimit;
     }
     *slot = true;
-    Mem_mem_set(m, 0, fd);
+    Mem_mem_set(m, 0, Value('L', fd));
     *s = Signal(None, 0);
     return Ok;
 }

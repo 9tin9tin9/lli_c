@@ -17,7 +17,7 @@ fromStr()
     Tok_fromStr(&t, &Str_fromLtl("-123.345"));
     REQUIRE(Tok_eq(&t, &(Tok){
                 Num,
-                .Num = -123.345
+                .Num = Value('D', -123.345)
                 }));
 
     Tok_fromStr(&t, &Str_fromLtl("[-123]"));
@@ -70,7 +70,7 @@ tokenize()
     REQUIRE(strcmp(Str_at(&Vec_at(&toks, 0, Tok)->Sym.sym, 0), "A") == 0);
 
     REQUIRE(Vec_at(&toks, 1, Tok)->tokType == Num);
-    REQUIRE(Vec_at(&toks, 1, Tok)->Num == -123.234234);
+    REQUIRE(Vec_at(&toks, 1, Tok)->Num.Double == -123.234234);
 
     REQUIRE(Vec_at(&toks, 2, Tok)->tokType == Var);
     REQUIRE(strcmp(Str_at(&Vec_at(&toks, 2, Tok)->Var.sym, 0), "asd") == 0);

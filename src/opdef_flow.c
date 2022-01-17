@@ -15,11 +15,10 @@ Error
 jc(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 2);
-    double cond;
+    Value cond;
     try(Tok_getValue(Vec_at_unsafe(v, 0, Tok), m, &cond));
-    if (cond){
+    if (cond.Long){
         size_t loc;
-        // try(Mem_label_find(m, &Vec_at_unsafe(v, 1, Tok)->Sym, &loc));
         try(Tok_getUint(Vec_at_unsafe(v, 1, Tok), m, &loc));
         *s = Signal(Jmp, loc);
     }else{
@@ -44,12 +43,14 @@ call(const Vec* v, Mem* m, Signal* s)
     argcGuard(v, 2);
     Tok* idx = Vec_at_unsafe(v, 0, Tok);
     size_t val;
-    double curr;
+    Value curr;
     size_t loc;
     try(Tok_getUint(idx, m, &val));
-    try(Tok_writeValue(idx, m, ++val));
+    val++;
+    try(Tok_writeValue(idx, m, Value('L', val)));
     try(Mem_mem_at(m, -1, &curr));
-    try(Mem_mem_set(m, val, curr+1));
+    curr.Long++;
+    try(Mem_mem_set(m, val, curr));
     try(Tok_getUint(Vec_at_unsafe(v, 1, Tok), m, &loc));
     *s = Signal(Jmp, loc);
     return Ok;
@@ -61,10 +62,10 @@ ret(const Vec* v, Mem* m, Signal* s)
     argcGuard(v, 1);
     Tok* idx = Vec_at_unsafe(v, 0, Tok);
     size_t val;
-    double loc;
+    Value loc;
     try(Tok_getUint(idx, m, &val));
     try(Mem_mem_at(m, val, &loc));
-    try(Tok_writeValue(idx, m, --val));
-    *s = Signal(Jmp, loc);
+    try(Tok_writeValue(idx, m, Value('L', val-1)));
+    *s = Signal(Jmp, loc.Long);
     return Ok;
 }

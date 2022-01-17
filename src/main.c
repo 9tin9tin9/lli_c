@@ -20,7 +20,7 @@ int main(int argc, char** argv){
 
     char* fileName = argv[1];
     Mem m = Mem_new();
-    Mem_nmem_push(&m, 0);
+    Mem_nmem_push(&m, Value('L', 0));
     Code c = Code_new();
 
     op_initOpTable();

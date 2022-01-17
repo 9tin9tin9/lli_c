@@ -37,11 +37,11 @@ extern Hashmap opIdxTable;
 extern Vec funcVec;
 
 // Extend Tok
-Error Tok_getValue(const Tok*, const Mem*, double*);
+Error Tok_getValue(const Tok*, const Mem*, Value*);
 Error Tok_getUint(const Tok*, const Mem*, size_t*);
 Error Tok_getInt(const Tok*, const Mem*, long*);
 Error Tok_getLoc(const Tok*, Mem*, long*);
-Error Tok_writeValue(const Tok*, Mem*, double);
+Error Tok_writeValue(const Tok*, Mem*, Value);
 Error Tok_createLtl(const Tok*, Mem*, long*);
 Error Tok_getSym(const Tok*, HashIdx*);
 

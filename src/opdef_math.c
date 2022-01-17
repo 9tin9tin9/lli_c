@@ -1,7 +1,7 @@
 #include "include/opdef.h"
 
 Error
-math_parseArg(const Vec* v, Mem* m, double* left, double* right)
+math_parseArg(const Vec* v, Mem* m, Value* left, Value* right)
 {
     argcGuard(v, 2);
     try(Tok_getValue(Vec_at_unsafe(v, 0, Tok), m, left));
@@ -10,9 +10,10 @@ math_parseArg(const Vec* v, Mem* m, double* left, double* right)
 }
 
 #define math(op_, v_, m_, s_) \
-    double left, right; \
+    Value left, right; \
     try(math_parseArg(v_, m_, &left, &right)); \
-    Mem_mem_set(m_, 0, left op_ right); \
+    long result = left.Long op_ right.Long; \
+    Mem_mem_set(m_, 0, Value('L', result)); \
     *s_ = Signal(None, 0); \
     return Ok;
 
@@ -43,23 +44,21 @@ div_(const Vec* v, Mem* m, Signal* s)
 Error
 mod(const Vec* v, Mem* m, Signal* s)
 {
-    double left, right;
+    Value left, right;
     try(math_parseArg(v, m, &left, &right));
-    if (left != (int)left || right != (int)right)
-        return Error_ModOperandNotInteger;
-    double result = (int)left % (int)right;
-    Mem_mem_set(m, 0, result);
+    long result = left.Long % right.Long;
+    Mem_mem_set(m, 0, Value('L', result));
     *s = Signal(None, 0);
     return Ok;
 }
 
 #define incrDecr(v, m, s, op) \
     argcGuard(v, 1); \
-    double val; \
+    Value val; \
     long loc; \
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &loc)); \
     try(Mem_mem_at(m, loc, &val)); \
-    val op; \
+    val.Long op; \
     try(Mem_mem_set(m, loc, val)); \
     *s = Signal(None, 0); \
     return Ok; \

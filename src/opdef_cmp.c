@@ -1,7 +1,7 @@
 #include "include/opdef.h"
 
 Error
-cmp_parseArg(const Vec* v, Mem* m, double* left, double* right)
+cmp_parseArg(const Vec* v, Mem* m, Value* left, Value* right)
 {
     argcGuard(v, 2);
     try(Tok_getValue(Vec_at_unsafe(v, 0, Tok), m, left));
@@ -9,10 +9,10 @@ cmp_parseArg(const Vec* v, Mem* m, double* left, double* right)
 }
 
 #define cmp(op_, v_, m_, s_) \
-    double left, right; \
+    Value left, right; \
     try(cmp_parseArg(v_, m_, &left, &right)); \
-    double result = left op_ right; \
-    Mem_mem_set(m_, 0, result); \
+    long result = left.Long op_ right.Long; \
+    Mem_mem_set(m_, 0, Value('L', result)); \
     *s_ = Signal(None, 0); \
     return Ok;
 

@@ -22,10 +22,14 @@ print_num(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 2);
     size_t fd;
-    double value;
+    Value value;
     try(Tok_getUint(Vec_at(v, 0, Tok), m, &fd));
     try(Tok_getValue(Vec_at(v, 1, Tok), m, &value));
-    fprintf(fdopen(fd, "w"), "%f\n", value);
+    if (value.type == 'D'){
+        fprintf(fdopen(fd, "w"), "%f\n", value.Double);
+    }else{
+        fprintf(fdopen(fd, "w"), "%ld\n", value.Long);
+    }
     *s = Signal(None, 0);
     return Ok;
 }
@@ -104,11 +108,11 @@ Signal_respond(const Signal* self, Mem* m, Code* c)
             Mem_label_set(m, self->SetLbl, Code_ptr(c)+1);
             break;
         case Signal_Curr:
-            Mem_mem_set(m, 0, Code_ptr(c));
+            Mem_mem_set(m, 0, Value('L', Code_ptr(c)));
             break;
         case Signal_Src:
             {
-            double oldPtr;
+            Value oldPtr;
             Mem_mem_at(m, -1, &oldPtr);
             Code src = Code_new();
             try(Code_fromFile(self->Src.array, m, &src));
@@ -124,7 +128,7 @@ Signal_respond(const Signal* self, Mem* m, Code* c)
 // Extend Tok
 
 Error
-Tok_getValue(const Tok* self, const Mem* m, double* d)
+Tok_getValue(const Tok* self, const Mem* m, Value* d)
 {
     switch (self->tokType) {
         case Num:
@@ -149,9 +153,9 @@ Tok_getValue(const Tok* self, const Mem* m, double* d)
             }
 
             for (size_t i = 0; i < layer; i++){
-                if (*d != (long)*d)
+                if (d->type != 'L')
                     return Error_NotInteger;
-                try(Mem_mem_at(m, (long)*d, d));
+                try(Mem_mem_at(m, d->Long, d));
             }
             return Ok;
             }
@@ -166,7 +170,7 @@ Tok_getValue(const Tok* self, const Mem* m, double* d)
         case Sym: {
             size_t loc;
             try(Mem_label_find(m, &self->Sym, &loc));
-            *d = loc;
+            *d = Value('L', loc);
             return Ok;
             }
 
@@ -189,12 +193,12 @@ Tok_getUint(const Tok* self, const Mem* m, size_t* i)
 Error
 Tok_getInt(const Tok* self, const Mem* m, long *i)
 {
-    double f;
+    Value f;
     try(Tok_getValue(self, m, &f));
-    *i = f;
-    if (*i != f){
+    if (f.type != 'L'){
         return Error_NotInteger;
     }
+    *i = f.Long;
     return Ok;
 }
 
@@ -213,18 +217,18 @@ Tok_getLoc(const Tok* self, Mem* m, long* l)
             if (idx->type == Idx_Type_Num){
                 *l = idx->Num;
             }else{
-                long i; double d;
+                long i; Value d;
                 try(Mem_var_find(m, &idx->Var, &i));
                 try(Mem_mem_at(m, i, &d));
-                if (d != (long)d) return Error_NotInteger;
-                *l = d;
+                if (d.type != 'L') return Error_NotInteger;
+                *l = d.Long;
             }
 
             for (long i = 0; i < layer-1; i++){
-                double d = *l;
-                try(Mem_mem_at(m, (long)d, &d));
-                if (d != (long)d) return Error_NotInteger;
-                *l = d;
+                Value d = Value('L', *l);
+                try(Mem_mem_at(m, d.Long, &d));
+                if (d.type != 'L') return Error_NotInteger;
+                *l = d.Long;
             }
             return Ok;
 
@@ -241,7 +245,7 @@ Tok_getLoc(const Tok* self, Mem* m, long* l)
 }
 
 Error
-Tok_writeValue(const Tok* self, Mem* m, double d)
+Tok_writeValue(const Tok* self, Mem* m, Value d)
 {
     long idx;
     try(Tok_getLoc(self, m, &idx));
@@ -260,10 +264,8 @@ Tok_createLtl(const Tok* self, Mem* m, long* i)
     }
     *i = Mem_nmem_len(m);
     for (int i = 0; i < Str_count(&self->Ltl); i++){
-        Vec_push(&m->nmem, (double)*Str_at(&self->Ltl, i));
+        Vec_push(&m->nmem, Value('L', *Str_at(&self->Ltl, i)));
     }
-    // ending a literal with two 0.0 slots, one provided by trailing null char in self.Ltl
-    Vec_push(&m->nmem, 0.0);
     return Ok;
 }
 
