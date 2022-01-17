@@ -85,7 +85,7 @@ Error
 op_exec(Mem* m, const Code* c, Signal* signal)
 {
     const Line* l = Code_curr(c);
-    return (*Vec_at(&funcVec, l->opcode, OpFunc))(&l->toks, m, signal);
+    return (*Vec_at_unsafe(&funcVec, l->opcode, OpFunc))(&l->toks, m, signal);
 }
 
 Error
@@ -178,21 +178,20 @@ Tok_getValue(const Tok* self, const Mem* m, double* d)
 Error
 Tok_getUint(const Tok* self, const Mem* m, size_t* i)
 {
-    double f;
-    try(Tok_getValue(self, m, &f));
-    *i = rint(f);
-    if (*i != f){
+    long l;
+    try(Tok_getInt(self, m, &l));
+    if (l < 0){
         return Error_NotPositiveInteger;
     }
+    *i = l;
     return Ok;
 }
-
 Error
 Tok_getInt(const Tok* self, const Mem* m, long *i)
 {
     double f;
     try(Tok_getValue(self, m, &f));
-    *i = rint(f);
+    *i = f;
     if (*i != f){
         return Error_NotInteger;
     }

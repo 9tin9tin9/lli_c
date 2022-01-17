@@ -182,7 +182,7 @@ run(Mem* m, Code* c)
 {
     Signal s;
     while(Code_ptr(c) < Code_len(c)){
-        Mem_mem_set(m, -1, Code_ptr(c));
+        *Vec_at_unsafe(&m->nmem, 0, double) = Code_ptr(c);
         try(op_exec(m, c, &s));
         try(Signal_respond(&s, m, c));
     }

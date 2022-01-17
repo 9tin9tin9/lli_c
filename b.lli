@@ -7,26 +7,25 @@ jmp: main
 
 # int sum(int, int)
 lbl: sum
-add: [1], [2]
-ret: $stack
+    add: [1], [2]
+    ret: $stack
 
 lbl: main
-# var i = 0
-push: $stack, 0
-var: i, [$stack]
-# loop {
+    # var i = 0
+    push: $stack, 0
+    var: i, [$stack]
+    # loop {
     lbl: loop_start
-    # i = sum(i, 1)
-    mov: [1], $i
-    mov: [2], 1
-    call: $stack, sum
-    mov: $i, [0]
-    # if (i == 10000000) break
-    eq: $i, 10000000
-    jc: [0], loop_end
-    jmp: loop_start
-# }
-lbl: loop_end
-
-# print(i)
-print_num: 1, $i
+        # i = sum(i, 1)
+        mov: [1], $i
+        mov: [2], 1
+        call: $stack, sum
+        mov: $i, [0]
+        # if (i == 10000000) break
+        eq: $i, 10000000
+        jc: [0], loop_end
+        jmp: loop_start
+    # }
+    lbl: loop_end
+    # print(i)
+    print_num: 1, $i

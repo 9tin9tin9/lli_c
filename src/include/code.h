@@ -19,7 +19,7 @@ typedef struct {
 #define Code_push(c_, t_, o_) Vec_push(&(c_)->lines, ((Line){(o_), *(t_)}))
 
 #define Code_at(c_, i_) Vec_at(&(c_)->lines, (i_), Line)
-#define Code_curr(c_) Vec_at(&(c_)->lines, (c_)->ptr, Line)
+#define Code_curr(c_) Vec_at_unsafe(&(c_)->lines, (c_)->ptr, Line)
 #define Code_len(c_) Vec_count(&(c_)->lines)
 #define Code_ptr(c_) ((c_)->ptr)
 
