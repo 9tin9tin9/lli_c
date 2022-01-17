@@ -5,7 +5,7 @@
 START_TEST();
 
 void
-push(){
+pushCode(){
     Code c = Code_new();
     Vec toks = Vec_from(
             Tok, 
@@ -26,7 +26,7 @@ int
 main()
 {
 
-    push();
+    pushCode();
 
     SUM_UP();
     return 0;

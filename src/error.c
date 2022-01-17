@@ -34,6 +34,7 @@ Error_print(Error r, void* _c, int level)
         error_case(Error_UndefinedVar);
         error_case(Error_UndefinedLabel);
         error_case(Error_UnknownOp);
+        error_case(Error_DuplicatedSymbols);
 
         error_case(Error_InvalidMemAccess);
         error_case(Error_CannotWriteToNMem);
@@ -49,7 +50,7 @@ Error_print(Error r, void* _c, int level)
         error_case(Error_InvalidOpenOption);
         error_case(Error_ExceedOpenLimit);
 
-        default:
+        case Ok:
             break;
     }
 }

@@ -54,7 +54,7 @@ fromStr()
     Tok_fromStr(&t, &Str_fromLtl("A"));
     REQUIRE(Tok_eq(&t, &(Tok){
                 Sym, 
-                .Sym = HashIdx_new(&Str_fromLtl("A"),0)
+                .Sym = HashIdx_new(&Str_fromLtl("A"), 0)
                 }));
 }
 

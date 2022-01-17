@@ -18,12 +18,12 @@
                 Str_raw(&tok->Sym.sym),  \
                 tok->Sym.idx);  \
     }else{  \
-        tok->Sym.idx = *idx;  \
+        return Error_DuplicatedSymbols;  \
     }  \
     return Ok;  \
 
 Error
-createSymTable(size_t opcode, Mem* m, Code* c, Vec* toks)
+addSymToTables(size_t opcode, Mem* m, Code* c, Vec* toks)
 {
     Tok* tok;
     size_t* idx;
@@ -59,7 +59,7 @@ preprocess(Mem* m, Code* c, Vec* toks)
     }
     opTok->Sym.idx = *opcode;
 
-    try(createSymTable(*opcode, m, c, toks));
+    try(addSymToTables(*opcode, m, c, toks));
     Code_push(c, toks, *opcode);
     return Ok;
 }
@@ -162,7 +162,7 @@ Code_fromFile(const char* fileName, Mem* m, Code* c)
         // DON'T free
         // remove trailing \n
         line[strlen(line)-1] = 0;
-        Str wrapper = (Str){strlen(line), line};
+        Str wrapper = (Str){.size = strlen(line), .array = line};
         try(lex_tokenize(&toks, &wrapper));
 
         try(preprocess(m, c, &toks));
@@ -171,8 +171,30 @@ Code_fromFile(const char* fileName, Mem* m, Code* c)
     if (ferror(fileptr)) {
         return Error_CannotReadFile;
     }
+    fclose(fileptr);
     try(updateSymIdx(m, c));
     // replace toks with args only. Op sym is not needed anymore
+    argSlice(c, oldlen);
+    return Ok;
+}
+
+// strArr end with NULL pointer
+Error
+Code_fromStrArray(char* strArr[], Mem* m, Code* c)
+{
+    size_t oldlen = Code_len(c);
+    char* line;
+    size_t linelen;
+    Error r;
+    size_t i = 0;
+    
+    while((line = strArr[i])){
+        Vec toks = Vec(Tok);
+        Str wrapper = (Str){.size = strlen(line), .array = line};
+        try(lex_tokenize(&toks, &wrapper));
+        try(preprocess(m, c, &toks));
+    }
+    try(updateSymIdx(m, c));
     argSlice(c, oldlen);
     return Ok;
 }

@@ -73,16 +73,6 @@ void shrinkStr(Str* s, size_t start, size_t end)
     s->array = new;
     s->size = newSize;
 }
-// #define shrinkStr(s_, start_, end_) \
-{ \
-    *Str_at(s, end_) = '\0'; \
-    size_t newSize = end_ - start_; \
-    char* new = malloc(newSize+1); \
-    memcpy(new, Str_at(s_, start_), newSize+1); \
-    free(s_->array); \
-    s_->array = new; \
-    s->size = newSize; \
-}
 
 // end: the last non-null character
 Error
@@ -166,14 +156,14 @@ Tok_fromStr(Tok* tok, Str* s)
 
         // Sym
         default:
-            *tok = Tok(Sym, *s);
+            *tok = Tok(Sym, HashIdx_new(s, 0));
             return Ok;
     }
 }
 
 #undef shrinkStr
 
-int
+Error
 eat_token(
     Tok* tok, const Str* s, size_t* ptr, 
     char delim, char unexpect, int errno
@@ -195,15 +185,15 @@ eat_token(
         if (c == NULL || *c == 0){
             break;
         }
-
         if (*c == '#' && state != STRLTL){
+            *ptr = Str_count(s);
             break;
+        }
 
-        }else if (*c == ' ' || *c == '\t'){
-            if (state == SYM){
-                state = ENDED;
-                continue;
-            }else if (state != STRLTL){
+        if ((*c == ' ' || *c == '\t') && state != STRLTL){
+            if (state != STRLTL){
+                if (state != WAITING)
+                    state = ENDED;
                 continue;
             }
 
@@ -296,8 +286,7 @@ lex_tokenize(Vec* des, const Str* s)
 
         default:
             // Expects symbol as operator
-            // set errno later
-            return 1;
+            return Error_WrongTokTypeForOp;
     }
     while(1){
         try(eat_args(&tok, &ptr, s));

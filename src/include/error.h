@@ -23,6 +23,7 @@ typedef enum{
     Error_UndefinedVar,
     Error_UndefinedLabel,
     Error_UnknownOp,
+    Error_DuplicatedSymbols,
 
     // runtime
     Error_InvalidMemAccess,
