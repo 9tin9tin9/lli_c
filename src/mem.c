@@ -139,10 +139,8 @@ Mem_label_set(Mem* self, size_t i, size_t idx)
 Error
 Mem_label_find(const Mem* self, const HashIdx* hi, size_t* des)
 {
-    size_t* elem = Vec_at(&self->label, hi->idx, size_t);
-    if (!elem)
-        return Error_UndefinedLabel;
-    *des = *elem;
+    // hi->idx should have been assigned during preprocessing
+    *des = *Vec_at_unsafe(&self->label, hi->idx, size_t);
     return Ok;
 }
 

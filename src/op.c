@@ -125,11 +125,11 @@ Signal_respond(const Signal* self, Mem* m, Code* c)
         case Signal_Src:
             {
             Value oldPtr;
-            Mem_mem_at(m, -1, &oldPtr);
+            oldPtr = *Vec_at_unsafe(&m->nmem, 0, Value);
             Code src = Code_new();
             try(Code_fromFile(self->Src.array, m, &src));
             try(run(m, &src));
-            Mem_mem_set(m, -1, oldPtr);
+            *Vec_at_unsafe(&m->nmem, 0, Value) = oldPtr;
             }
             break;
     }
