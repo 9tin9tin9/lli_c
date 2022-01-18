@@ -204,7 +204,7 @@ run(Mem* m, Code* c)
 {
     Signal s;
     while(Code_ptr(c) < Code_len(c)){
-        *Vec_at_unsafe(&m->nmem, 0, Value) = Value('L', Code_ptr(c));
+        *Vec_at_unsafe(&m->nmem, 0, Value) = Value(Long, Code_ptr(c));
         try(op_exec(m, c, &s));
         try(Signal_respond(&s, m, c));
     }

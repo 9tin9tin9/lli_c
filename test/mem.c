@@ -7,7 +7,7 @@ void
 pmem_at()
 {
     Mem m = Mem_new();
-    Value v10 = Value('L', 10);
+    Value v10 = Value(Long, 10);
     Vec_push(&m.pmem, v10);
     Value d;
     Error r = Mem_pmem_at(&m, 1, &d);
@@ -22,10 +22,10 @@ void
 pmem_set()
 {
     Mem m = Mem_new();
-    Value v10 = Value('L', 10);
+    Value v10 = Value(Long, 10);
     Error r = Mem_pmem_set(&m, 1, v10);
     REQUIRE(r == Error_InvalidMemAccess);
-    Vec_push(&m.pmem, Value('L', 0));
+    Vec_push(&m.pmem, Value(Long, 0));
     r = Mem_pmem_set(&m, 1, v10);
     REQUIRE(Value_eq(Vec_at(&m.pmem, 1, Value), &v10));
 }
@@ -34,7 +34,7 @@ void
 nmem_at()
 {
     Mem m = Mem_new();
-    Value v10 = Value('L', 10);
+    Value v10 = Value(Long, 10);
     Vec_push(&m.nmem, v10);
     Value d;
     Error r = Mem_nmem_at(&m, 1, &d);
@@ -49,10 +49,10 @@ void
 nmem_set()
 {
     Mem m = Mem_new();
-    Value v10 = Value('L', 10);
+    Value v10 = Value(Long, 10);
     Error r = Mem_nmem_set(&m, 1, v10);
     REQUIRE(r == Error_InvalidMemAccess);
-    Vec_push(&m.nmem, Value('L', 0));
+    Vec_push(&m.nmem, Value(Long, 0));
     r = Mem_nmem_set(&m, 1, v10);
     REQUIRE(Value_eq(Vec_at(&m.nmem, 0, Value), &v10));
 }
@@ -62,10 +62,10 @@ readLtl()
 {
     Mem m = Mem_new();
     Vec s = Vec_from(Value,
-            Value('L', 'a'),
-            Value('L', 's'),
-            Value('L', 'd'),
-            Value('L', 0));
+            Value(Long, 'a'),
+            Value(Long, 's'),
+            Value(Long, 'd'),
+            Value(Long, 0));
     Mem_nmem_alloc(&m, &s);
     Str r = Str();
     Mem_readLtl(&m, -1, &r);

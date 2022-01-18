@@ -17,7 +17,7 @@ fromStr()
     Tok_fromStr(&t, &Str_fromLtl("-123.345"));
     REQUIRE(Tok_eq(&t, &(Tok){
                 Num,
-                .Num = Value('D', -123.345)
+                .Num = Value(Double, -123.345)
                 }));
 
     Tok_fromStr(&t, &Str_fromLtl("[-123]"));

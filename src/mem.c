@@ -7,7 +7,7 @@ Mem_new()
     bool fd[1024] = { false };
     fd[0] = fd[1] = fd[2] = true;
     return (Mem){
-        .pmem = Vec_from(Value, 0),
+        .pmem = Vec_from(Value, Value(Long, 0)),
         .nmem = Vec(Value),
         .varLookUp = Hashmap(),
         .var = Vec(long),
@@ -152,7 +152,7 @@ Mem_readLtl(const Mem* self, long idx, Str* des)
     while(1){
         Value c;
         try(Mem_mem_at(self, idx, &c));
-        if (*Value_getL(&c) == 0){
+        if (c.Long == 0){
             return Ok;
         }
         Str_push(des, *Value_getL(&c));

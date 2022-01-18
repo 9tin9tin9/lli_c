@@ -41,6 +41,8 @@ loc: ptr(Ptr)  # writes the ptr as value to [0]
 allc: size(Value)  # Push slots to pmem
 push: idx(WPtr), val(Value)  # increments idx and then assigns val to idx
 pop: idx(WPtr)  # decrements pointer
+ltof: idx(WPtr)  # change from Long to Double
+ftol: idx(WPtr)  # change from Double to Long
 
 # maths, [0] is set as result
 # args can be index, var or Num
@@ -51,12 +53,22 @@ div: left(Value), right(Value)  # /
 mod: left(Value), right(Value)  # %
 inc: idx(WPtr)  # ++
 dec: idx(WPtr)  # --
+addf: left(Value), right(Value)  # (float)+
+subf: left(Value), right(Value)  # (float)-
+mulf: left(Value), right(Value)  # (float)*
+divf: left(Value), right(Value)  # (float)/
+incf: idx(WPtr)  # (float)++
+decf: idx(WPtr)  # (float)--
 
 # cmp, [0] is set to either 0 or 1
 eq: left(Value), right(Value)  # ==
 ne: left(Value), right(Value)  # !=
 gt: left(Value), right(Value)  # >
 lt: left(Value), right(Value)  # <
+eqf: left(Value), right(Value)  # (float)==
+nef: left(Value), right(Value)  # (float)!=
+gtf: left(Value), right(Value)  # (float)>
+ltf: left(Value), right(Value)  # (float)<
 
 # logic, [0] is set to either 0 or 1
 and: left(Value), right(Value)  # &&

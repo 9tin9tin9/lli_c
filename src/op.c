@@ -46,6 +46,8 @@ op_initOpTable()
     addEntry(allc);
     addEntry(push);
     addEntry(pop);
+    addEntry(ltof);
+    addEntry(ftol);
 
     addEntry(add);
     addEntry(sub);
@@ -54,11 +56,21 @@ op_initOpTable()
     addEntry(mod);
     addEntry(inc);
     addEntry(dec);
+    addEntry(addf);
+    addEntry(subf);
+    addEntry(mulf);
+    addEntry(divf);
+    addEntry(incf);
+    addEntry(decf);
 
     addEntry(eq);
     addEntry(ne);
     addEntry(gt);
     addEntry(lt);
+    addEntry(eqf);
+    addEntry(nef);
+    addEntry(gtf);
+    addEntry(ltf);
 
     addEntry(and);
     addEntry(or);
@@ -108,7 +120,7 @@ Signal_respond(const Signal* self, Mem* m, Code* c)
             Mem_label_set(m, self->SetLbl, Code_ptr(c)+1);
             break;
         case Signal_Curr:
-            Mem_mem_set(m, 0, Value('L', Code_ptr(c)));
+            Mem_mem_set(m, 0, Value(Long, Code_ptr(c)));
             break;
         case Signal_Src:
             {
@@ -170,7 +182,7 @@ Tok_getValue(const Tok* self, const Mem* m, Value* d)
         case Sym: {
             size_t loc;
             try(Mem_label_find(m, &self->Sym, &loc));
-            *d = Value('L', loc);
+            *d = Value(Long, loc);
             return Ok;
             }
 
@@ -220,14 +232,12 @@ Tok_getLoc(const Tok* self, Mem* m, long* l)
                 long i; Value d;
                 try(Mem_var_find(m, &idx->Var, &i));
                 try(Mem_mem_at(m, i, &d));
-                if (d.type != 'L') return Error_NotInteger;
                 *l = d.Long;
             }
 
             for (long i = 0; i < layer-1; i++){
-                Value d = Value('L', *l);
+                Value d = Value(Long, *l);
                 try(Mem_mem_at(m, d.Long, &d));
-                if (d.type != 'L') return Error_NotInteger;
                 *l = d.Long;
             }
             return Ok;
@@ -262,10 +272,11 @@ Tok_createLtl(const Tok* self, Mem* m, long* i)
     if (self->tokType != Ltl){
         return Error_WrongArgType;
     }
-    *i = Mem_nmem_len(m);
+    *i = -(Mem_nmem_len(m)+1);
     for (int i = 0; i < Str_count(&self->Ltl); i++){
-        Vec_push(&m->nmem, Value('L', *Str_at(&self->Ltl, i)));
+        Vec_push(&m->nmem, Value(Long, *Str_at(&self->Ltl, i)));
     }
+    Vec_push(&m->nmem, Value(Long, 0));
     return Ok;
 }
 

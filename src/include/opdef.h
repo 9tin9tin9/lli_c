@@ -21,6 +21,8 @@ enum Opcode{
     OPCODE_ALLC,
     OPCODE_PUSH,
     OPCODE_POP,
+    OPCODE_LTOF,
+    OPCODE_FTOL,
     
     OPCODE_ADD,
     OPCODE_SUB,
@@ -29,11 +31,21 @@ enum Opcode{
     OPCODE_MOD,
     OPCODE_INC,
     OPCODE_DEC,
+    OPCODE_ADDF,
+    OPCODE_SUBF,
+    OPCODE_MULF,
+    OPCODE_DIVF,
+    OPCODE_INCF,
+    OPCODE_DECF,
     
     OPCODE_EQ,
     OPCODE_NE,
     OPCODE_GT,
     OPCODE_LT,
+    OPCODE_EQF,
+    OPCODE_NEF,
+    OPCODE_GTF,
+    OPCODE_LTF,
     
     OPCODE_AND,
     OPCODE_OR,
@@ -64,6 +76,8 @@ defOp(loc);
 defOp(allc);
 defOp(push);
 defOp(pop);
+defOp(ltof);
+defOp(ftol);
 
 defOp(add);
 defOp(sub);
@@ -72,11 +86,21 @@ defOp(div_);
 defOp(mod);
 defOp(inc);
 defOp(dec);
+defOp(addf);
+defOp(subf);
+defOp(mulf);
+defOp(divf);
+defOp(incf);
+defOp(decf);
 
 defOp(eq);
 defOp(ne);
 defOp(gt);
 defOp(lt);
+defOp(eqf);
+defOp(nef);
+defOp(gtf);
+defOp(ltf);
 
 defOp(and);
 defOp(or);

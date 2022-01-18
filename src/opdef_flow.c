@@ -41,16 +41,24 @@ Error
 call(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 2);
-    Tok* idx = Vec_at_unsafe(v, 0, Tok);
-    size_t val;
+    long idx;
+    Value* ptr;
     Value curr;
     size_t loc;
-    try(Tok_getUint(idx, m, &val));
-    val++;
-    try(Tok_writeValue(idx, m, Value('L', val)));
+
+    // getUint
+    try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
+    if (idx < 0) return Error_CannotWriteToNMem;
+    ptr = Vec_at_unsafe(&m->pmem, idx, Value);
+    if (ptr->type != 'L') return Error_NotInteger;
+    if (ptr->Long < 0) return Error_CannotWriteToNMem;
+
+    // writeValue
+    ptr->Long++;
+
     try(Mem_mem_at(m, -1, &curr));
     curr.Long++;
-    try(Mem_mem_set(m, val, curr));
+    try(Mem_mem_set(m, ptr->Long, curr));
     try(Tok_getUint(Vec_at_unsafe(v, 1, Tok), m, &loc));
     *s = Signal(Jmp, loc);
     return Ok;
@@ -60,12 +68,21 @@ Error
 ret(const Vec* v, Mem* m, Signal* s)
 {
     argcGuard(v, 1);
-    Tok* idx = Vec_at_unsafe(v, 0, Tok);
-    size_t val;
+    Value* ptr;
     Value loc;
-    try(Tok_getUint(idx, m, &val));
-    try(Mem_mem_at(m, val, &loc));
-    try(Tok_writeValue(idx, m, Value('L', val-1)));
+    long idx;
+
+    // getUint
+    try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
+    if (idx < 0) return Error_CannotWriteToNMem;
+    ptr = Vec_at_unsafe(&m->pmem, idx, Value);
+    if (ptr->type != 'L') return Error_NotInteger;
+
+    try(Mem_mem_at(m, ptr->Long, &loc));
+
+    // writeValue
+    ptr->Long--;
+
     *s = Signal(Jmp, loc.Long);
     return Ok;
 }

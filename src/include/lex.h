@@ -16,13 +16,7 @@ typedef struct {
     };
 }Value;
 
-static inline Value Value_(char type, void* val)
-{
-    return type == 'D'?
-        (Value){.type = 'D', .Double = *(double*)val} :
-        (Value){.type = 'L', .Long = *(long*)val};
-}
-#define Value(t_, v_) Value_(t_, (__typeof__(v_)[]){v_})
+#define Value(t_, v_) (Value){.type = #t_[0], .t_ = v_}
 static inline int Value_eq(const Value* l, const Value* r)
 {
     return l->type == r->type && l->Double == r->Double;
