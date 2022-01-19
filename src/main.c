@@ -2,6 +2,7 @@
 #include "include/op.h"
 #include <stdio.h>
 #include <limits.h>
+#include <time.h>
 
 const int ERROR_MSG_LEVEL = 1;
 
@@ -11,6 +12,18 @@ const int ERROR_MSG_LEVEL = 1;
         Error_print(r, _c, ERROR_MSG_LEVEL);  \
         exit(1);  \
     } \
+}
+
+static inline struct timespec now()
+{
+    struct timespec time;
+    timespec_get(&time, TIME_UTC);
+    return time;
+}
+
+static inline long diff(struct timespec* start, struct timespec* end)
+{
+    return end->tv_sec*1e9 + end->tv_nsec - start->tv_sec*1e9 - start->tv_nsec;
 }
 
 int main(int argc, char** argv){
@@ -26,7 +39,12 @@ int main(int argc, char** argv){
     op_initOpTable();
     exitIfError(Code_from(&m, &c, Generator_File(fileName)), &c);
     exitIfError(Code_updateSymIdx(&m, &c), &c);
+
+    struct timespec run_start = now();
     exitIfError(run(&m, &c), &c);
+    struct timespec run_end = now();
+
+    printf("run: %.3f\n", diff(&run_start, &run_end) / 1.0e9);
 
     return 0;
 }

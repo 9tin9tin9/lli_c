@@ -1,22 +1,12 @@
 allc: 3
-# var: counter, [1]
-# var: ?, [0]
-# lbl: loopStart
-# add: $counter, 1
-# mov: $counter, $?
-# eq: $counter, 10000000
-# jc: $?, exitLoop
-# jmp: loopStart
-# 
-# lbl: exitLoop
-# print_num: 1, $counter
-
+var: counter, [1]
+var: ?, [0]
 lbl: loopStart
-add: [1], 1
-mov: [1], [0]
-eq: [1], 10000000
-jc: [0], exitLoop
+add: $counter, 1
+mov: $counter, $?
+eq: $counter, 10000000
+jc: $?, exitLoop
 jmp: loopStart
 
 lbl: exitLoop
-print_num: 1, [1]
+print_num: 1, $counter

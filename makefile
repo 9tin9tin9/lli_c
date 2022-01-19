@@ -1,6 +1,6 @@
 CC = gcc-11
 FSANFLAG =# -fsanitize=address -fsanitize=alignment 
-OPTFLAG = -g -Ofast -fno-fast-math -flto -fjump-tables #--param=case-values-threshold=0
+OPTFLAG = -g -O3 -fno-fast-math -flto -fjump-tables
 STDFLAG = -std=c11
 CFLAGS = $(STDFLAG) $(FSANFLAG) $(OPTFLAG) -pipe 
 FILE_NAMES = error lex mem op core opdef_nop opdef_mem opdef_math opdef_cmp opdef_logic opdef_flow opdef_sys opdef_extern

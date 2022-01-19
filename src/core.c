@@ -7,6 +7,8 @@
 // find symbol and then assign index or update table
 #define _findAndUpdate(location, action) \
     tok = Vec_at(toks, 0, Tok);  \
+    if (tok->tokType != Sym) \
+        return Error_WrongArgType;  \
     idx = Hashmap_at(  \
             m->location,  \
             Str_raw(&tok->Sym.sym),  \
@@ -120,7 +122,7 @@ Code_updateSymIdx(Mem* m, Code* c)
         for (int j = 0; j < Vec_count(&line->toks); j++){
             hi = NULL;
             Tok* tok = Vec_at(&line->toks, j, Tok);
-            if (tok->tokType != Var) continue; 
+            if (tok->tokType != Var && tok->tokType != Idx) continue; 
 
             if (tok->tokType == Idx){
                 struct Idx* idx = &tok->Idx;
