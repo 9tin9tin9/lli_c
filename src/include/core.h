@@ -6,8 +6,24 @@
 #include "code.h"
 
 // Initialisers
-Error Code_fromFile(const char* fileName, Mem* m, Code* c);
-Error Code_fromStr(const char** strs, const size_t* lens, size_t len, Mem* m, Code* c);
+typedef Error (*Generator)(void* state, char** str);
+
+Error Code_from(
+        Mem* m,
+        Code* c,
+        void* state);
+
+Error generator_File(void* state, char** str);
+#define Generator_File(f) (struct _{Generator _1; void* _2; int _3;}[]) \
+        {(struct _){generator_File, f, 0}}
+
+// strArr end with NULL pointer
+Error generator_StrArr(void* state, char** str);
+#define Generator_StrArr(f) (struct _{Generator _1; void* _2; int _3;}[]) \
+        {(struct _){generator_StrArr, f, 0}}
+
+
+Error Code_updateSymIdx(Mem* m, Code* c);
 
 Error run(Mem* m, Code* c);
 

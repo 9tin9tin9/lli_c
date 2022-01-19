@@ -122,16 +122,6 @@ Signal_respond(const Signal* self, Mem* m, Code* c)
         case Signal_Curr:
             Mem_mem_set(m, 0, Value(Long, Code_ptr(c)));
             break;
-        case Signal_Src:
-            {
-            Value oldPtr;
-            oldPtr = *Vec_at_unsafe(&m->nmem, 0, Value);
-            Code src = Code_new();
-            try(Code_fromFile(self->Src.array, m, &src));
-            try(run(m, &src));
-            *Vec_at_unsafe(&m->nmem, 0, Value) = oldPtr;
-            }
-            break;
     }
     Code_ptr_incr(c);
     return Ok;

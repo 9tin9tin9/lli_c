@@ -24,7 +24,8 @@ int main(int argc, char** argv){
     Code c = Code_new();
 
     op_initOpTable();
-    exitIfError(Code_fromFile(fileName, &m, &c), &c);
+    exitIfError(Code_from(&m, &c, Generator_File(fileName)), &c);
+    exitIfError(Code_updateSymIdx(&m, &c), &c);
     exitIfError(run(&m, &c), &c);
 
     return 0;

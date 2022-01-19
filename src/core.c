@@ -6,7 +6,7 @@
 
 // find symbol and then assign index or update table
 #define _findAndUpdate(location, action) \
-    tok = Vec_at(toks, 1, Tok);  \
+    tok = Vec_at(toks, 0, Tok);  \
     idx = Hashmap_at(  \
             m->location,  \
             Str_raw(&tok->Sym.sym),  \
@@ -20,19 +20,26 @@
     }else{  \
         return Error_DuplicatedSymbols;  \
     }  \
-    return Ok;  \
 
 Error
-addSymToTables(size_t opcode, Mem* m, Code* c, Vec* toks)
+prerun(size_t opcode, Mem* m, Code* c, Vec* toks)
 {
     Tok* tok;
     size_t* idx;
+    Str name;
     switch (opcode){
         case OPCODE_LBL:
             _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(c)+1));
+            break;
         
         case OPCODE_VAR:
             _findAndUpdate(varLookUp, Mem_var_add(m, 0));
+            break;
+
+        case OPCODE_SRC:
+            name = Vec_at(toks, 0, Tok)->Sym.sym;
+            try(Code_from(m, c, Generator_File(name.array)));
+            break;
     }
     return Ok;
 }
@@ -58,8 +65,14 @@ preprocess(Mem* m, Code* c, Vec* toks)
         return Error_UnknownOp;
     }
     opTok->Sym.idx = *opcode;
+    // trunc first tok (op)
+    toks->size--;
+    memmove(toks->array,
+            toks->array+toks->elem_size,
+            toks->size*toks->elem_size);
 
-    try(addSymToTables(*opcode, m, c, toks));
+    // checkArgc()
+    try(prerun(*opcode, m, c, toks));
     Code_push(c, toks, *opcode);
     return Ok;
 }
@@ -83,7 +96,7 @@ preprocess(Mem* m, Code* c, Vec* toks)
 
 // loop throguh all lines to update HashIdx.idx
 Error
-updateSymIdx(Mem* m, Code* c)
+Code_updateSymIdx(Mem* m, Code* c)
 {
     const size_t codeLen = Code_len(c);
     size_t* idx;
@@ -92,36 +105,39 @@ updateSymIdx(Mem* m, Code* c)
         Line* line = Code_at(c, i);
         HashIdx* hi = &Vec_at(&line->toks, 0, Tok)->Sym;
 
-        switch (hi->idx) {
+        switch (line->opcode) {
             case OPCODE_JMP:
-                _updateLabel(1);
+                _updateLabel(0);
 
             case OPCODE_JC:
-                _updateLabel(2);
+                _updateLabel(1);
+
+            case OPCODE_CALL:
+                _updateLabel(1);
         }
 
         // replace Var. Var maybe inside nested Idx
-            for (int j = 1; j < Vec_count(&line->toks); j++){
-                hi = NULL;
-                Tok* tok = Vec_at(&line->toks, j, Tok);
-                if (tok->tokType != Var) continue; 
+        for (int j = 0; j < Vec_count(&line->toks); j++){
+            hi = NULL;
+            Tok* tok = Vec_at(&line->toks, j, Tok);
+            if (tok->tokType != Var) continue; 
 
-                if (tok->tokType == Idx){
-                    struct Idx* idx = &tok->Idx;
-                    while(idx->type == Idx_Type_Idx) idx = idx->Idx;
-                    if (idx->type == Idx_Type_Num) continue;
-                    hi = &idx->Var;
-                }
-
-                if (!hi) hi = &Vec_at(&line->toks, j, Tok)->Var;
-                idx = Hashmap_at(
-                        m->varLookUp, 
-                        Str_raw(&hi->sym), 
-                        size_t);
-                if (!idx)
-                    return Error_UndefinedVar;
-                hi->idx = *idx;
+            if (tok->tokType == Idx){
+                struct Idx* idx = &tok->Idx;
+                while(idx->type == Idx_Type_Idx) idx = idx->Idx;
+                if (idx->type == Idx_Type_Num) continue;
+                hi = &idx->Var;
             }
+
+            if (!hi) hi = &Vec_at(&line->toks, j, Tok)->Var;
+            idx = Hashmap_at(
+                    m->varLookUp, 
+                    Str_raw(&hi->sym), 
+                    size_t);
+            if (!idx)
+                return Error_UndefinedVar;
+            hi->idx = *idx;
+        }
     }
     Code_ptr_set(c, 0);
     return Ok;
@@ -129,73 +145,77 @@ updateSymIdx(Mem* m, Code* c)
 
 #undef _updateLabel
 
-void
-argSlice(Code* c, size_t from)
+Error
+generator_File(void* _state, char** str)
 {
-    for (int i = from; i < Code_len(c); i++){
-        Line* l = Code_at(c, i);
-        Vec t = l->toks;
-        t.array += t.elem_size;
-        t.size--;
-        Vec a = Vec_copy(&t);
-        Vec_del(&l->toks);
-        l->toks = a;
+    struct State {
+        Generator g;
+        void* file;
+        int status;
+    }* state = _state;
+    static char line[MAX_INPUT] = {0};
+
+    switch (state->status){
+        case 0:
+            state->file = fopen(state->file, "r");
+            if (!state->file){
+                return Error_CannotOpenFile;
+            }
+            state->status = 1;
+
+        default:
+            if (!fgets(line, MAX_INPUT, state->file)){
+                if (ferror(state->file)){
+                    return Error_CannotReadFile;
+                }
+                fclose(state->file);
+                *str = NULL;
+                state->status = 0;
+            }else{
+                // remove trailing \n
+                const size_t len = strlen(line);
+                if (len > 0 && line[len-1] == '\n')
+                    line[len-1] = 0;
+                *str = line;
+            }
+            return Ok;
     }
 }
 
 Error
-Code_fromFile(const char* fileName, Mem* m, Code* c)
+generator_StrArr(void* _state, char** str)
 {
-    size_t oldlen = Code_len(c);
-
-    FILE* fileptr = fopen(fileName, "r");
-    if (!fileptr){
-        return Error_CannotOpenFile;
-    }
-
-    char line[MAX_INPUT] = {0};
-    size_t linelen;
-    Error r;
-
-    while(fgets(line, MAX_INPUT, fileptr)){
-        Vec toks = Vec(Tok);
-        // DON'T free
-        // remove trailing \n
-        line[strlen(line)-1] = 0;
-        Str wrapper = (Str){.size = strlen(line), .array = line};
-        try(lex_tokenize(&toks, &wrapper));
-
-        try(preprocess(m, c, &toks));
-    }
-
-    if (ferror(fileptr)) {
-        return Error_CannotReadFile;
-    }
-    fclose(fileptr);
-    try(updateSymIdx(m, c));
-    // replace toks with args only. Op sym is not needed anymore
-    argSlice(c, oldlen);
+    struct State {
+        Generator g;
+        void* str;
+        int i;
+    }* state = _state;
+    static size_t i = 0;
+    *str = ((char**)state->str)[i++];
     return Ok;
 }
 
-// strArr end with NULL pointer
 Error
-Code_fromStrArray(char* strArr[], Mem* m, Code* c)
+Code_from(Mem* m, Code* c, void* _state)
 {
-    size_t oldlen = Code_len(c);
+    struct State {
+        Generator g;
+        void* str;
+    }* state = _state;
     char* line;
     size_t linelen;
     Error r;
-    size_t i = 0;
-    
-    while((line = strArr[i])){
+
+    while(1){
         Vec toks = Vec(Tok);
+        try(state->g(state, &line));
+        if (!line) break;
         Str wrapper = (Str){.size = strlen(line), .array = line};
         try(lex_tokenize(&toks, &wrapper));
+
         try(preprocess(m, c, &toks));
     }
-    try(updateSymIdx(m, c));
-    argSlice(c, oldlen);
+
     return Ok;
 }
 

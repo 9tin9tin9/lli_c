@@ -120,6 +120,12 @@ Mem_var_find(const Mem* self, const HashIdx* hi, long* des)
 {
     // hi->idx should have been assigned during preprocessing
     *des = *Vec_at_unsafe(&self->var, hi->idx, long);
+
+    // allowing resolving symbols during runtime
+    // long* v = Vec_at(&self->var, hi->idx, long);
+    // if (!v)
+    //     return Error_UndefinedVar;
+    // *des = *v;
     return Ok;
 }
 
@@ -141,6 +147,12 @@ Mem_label_find(const Mem* self, const HashIdx* hi, size_t* des)
 {
     // hi->idx should have been assigned during preprocessing
     *des = *Vec_at_unsafe(&self->label, hi->idx, size_t);
+
+    // allowing resolving symbols during runtime
+    // size_t* l = Vec_at(&self->label, hi->idx, size_t);
+    // if (!l)
+    //     return Error_UndefinedLabel;
+    // *des = *l;
     return Ok;
 }
 

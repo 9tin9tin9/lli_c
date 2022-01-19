@@ -4,11 +4,7 @@ allc: 100
 var: stack, [10]
 mov: $stack, 10
 jmp: main
-
-# int sum(int, int)
-lbl: sum
-    add: [1], [2]
-    ret: $stack
+src: c.lli
 
 lbl: main
     # var i = 0

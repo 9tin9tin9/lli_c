@@ -13,14 +13,12 @@ typedef struct{
         Signal_SetLbl,
         Signal_Curr,
         Signal_Jmp,
-        Signal_Src,
     }type;
     union{
         char None;
         size_t SetLbl;
         char Curr;
         size_t Jmp;
-        Str Src;
     };
 }Signal;
 #define Signal(type_, ...) ((Signal){Signal_##type_, .type_ = __VA_ARGS__})
