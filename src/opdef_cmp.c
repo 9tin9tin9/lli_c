@@ -12,7 +12,7 @@ cmp_parseArg(const Vec* v, Mem* m, Value* left, Value* right)
     Value left, right; \
     try(cmp_parseArg(v_, m_, &left, &right)); \
     long result = left.Long op_ right.Long; \
-    *Vec_at_unsafe(&m_->pmem, 0, Value) = Value(Long, result); \
+    *Vec_at_unsafe(&m_->mem, 0, Value) = Value(Long, result); \
     *s_ = Signal(None, 0); \
     return Ok;
 
@@ -46,7 +46,7 @@ lt(const Vec* v, Mem* m, Signal* s)
     if (left.type == 'L') left.Double = left.Long; \
     if (right.type == 'L') right.Double = right.Long; \
     double result = left.Double op_ right.Double; \
-    *Vec_at_unsafe(&m_->pmem, 0, Value) = Value(Double, result); \
+    *Vec_at_unsafe(&m_->mem, 0, Value) = Value(Double, result); \
     *s_ = Signal(None, 0); \
     return Ok;
 

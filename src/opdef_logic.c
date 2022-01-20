@@ -13,7 +13,7 @@ unaryLogic(enum UnaryLogicType t, const Vec* v, Mem* m, Signal* s){
     long result = t == AND?
         left.Long != 0 && right.Long != 0:
         left.Long != 0 || right.Long != 0;
-    *Vec_at_unsafe(&m->pmem, 0, Value) = Value(Long, result);
+    *Vec_at_unsafe(&m->mem, 0, Value) = Value(Long, result);
     *s = Signal(None, 0);
     return Ok;
 }
@@ -37,7 +37,7 @@ not(const Vec* v, Mem* m, Signal* s)
     Value value;
     try(Tok_getValue(Vec_at_unsafe(v, 0, Tok), m, &value));
     long result = value.Long == 0;
-    *Vec_at_unsafe(&m->pmem, 0, Value) = Value(Long, result);
+    *Vec_at_unsafe(&m->mem, 0, Value) = Value(Long, result);
     *s = Signal(None, 0);
     return Ok;
 }

@@ -1,5 +1,5 @@
 #include "include/core.h"
-#include "include/op.h"
+#include "include/opdef.h"
 #include <stdio.h>
 #include <limits.h>
 #include <time.h>
@@ -32,13 +32,12 @@ int main(int argc, char** argv){
     }
 
     char* fileName = argv[1];
-    Mem m = Mem_new();
-    Mem_nmem_push(&m, &Value(Long, 0));
+    Mem m = Mem_new(10);
     Code c = Code_new();
 
     op_initOpTable();
     exitIfError(Code_from(&m, &c, Generator_File(fileName)), &c);
-    exitIfError(Code_updateSymIdx(&m, &c), &c);
+    exitIfError(resolveSym(&m, &c), &c);
 
     struct timespec run_start = now();
     exitIfError(run(&m, &c), &c);

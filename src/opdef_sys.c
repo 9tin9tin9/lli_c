@@ -38,6 +38,7 @@ write_(const Vec* v, Mem* m, Signal* s)
             return Error_IoError;
         idxIncr(&srcIdx, 1);
     }
+    fflush(f);
     Mem_mem_set(m, 0, &Value(Long, i));
     *s = Signal(None, 0);
     return Ok;
@@ -107,7 +108,7 @@ parseOpenOption(size_t oVal, int* oflag)
 }
 
 // Open file and set [0] to fd
-//      open: name(Ptr | Sym), option(Value)
+//      open: name(Ptr), option(Value)
 //
 // Open options: number consisting 6 or less digits
 //
@@ -139,14 +140,14 @@ open_(const Vec* v, Mem* m, Signal* s)
     argcGuard(v, 2);
     Str name = Str();
     Tok t = *Vec_at_unsafe(v, 0, Tok);
-    if (t.tokType == Sym){
-        // borrow
-        name = t.Sym.sym;
-    }else{
+    // if (t.tokType == Sym){
+    //     // borrow
+    //     name = t.Sym.sym;
+    // }else{
         long namePtr;
         try(Tok_getLoc(&t, m, &namePtr));
         try(Mem_readLtl(m, namePtr, &name));
-    }
+    // }
     size_t oVal;
     try(Tok_getUint(Vec_at_unsafe(v, 1, Tok), m, &oVal));
     int oflag;

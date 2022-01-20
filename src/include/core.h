@@ -23,7 +23,7 @@ Error generator_StrArr(void* state, char** str);
         {(struct _){generator_StrArr, f, 0}}
 
 
-Error Code_updateSymIdx(Mem* m, Code* c);
+Error resolveSym(Mem* m, Code* c);
 
 Error run(Mem* m, Code* c);
 

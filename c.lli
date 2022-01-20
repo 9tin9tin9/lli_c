@@ -1,3 +1,0 @@
-lbl: sum
-    add: [1], [2]
-    ret: $stack

@@ -52,7 +52,7 @@ loc(const Vec* v, Mem* m, Signal* s)
     argcGuard(v, 1);
     long i;
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &i));
-    *Vec_at_unsafe(&m->pmem, 0, Value) = Value(Long, i);
+    *Vec_at_unsafe(&m->mem, 0, Value) = Value(Long, i);
     *s = Signal(None, 0);
     return Ok;
 }
@@ -65,7 +65,7 @@ allc(const Vec* v, Mem* m, Signal* s)
     size_t sizeS;
     try(Tok_getUint(sizeTok, m, &sizeS));
     for (int i = 0; i < sizeS; i++){
-        Mem_pmem_push(m, &Value(Long, 0));
+        Mem_mem_push(m, 1);
     }
     *s = Signal(None, 0);
     return Ok;
@@ -82,7 +82,7 @@ push(const Vec* v, Mem* m, Signal* s)
     // getUint
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
     if (idx < 0) return Error_CannotWriteToNMem;
-    ptr = Vec_at_unsafe(&m->pmem, idx, Value);
+    ptr = Vec_at_unsafe(&m->mem, idx, Value);
     if (ptr->type != 'L') return Error_NotInteger;
     if (ptr->Long < 0) return Error_CannotWriteToNMem;
 
@@ -106,11 +106,11 @@ pop(const Vec* v, Mem* m, Signal* s)
     // getUint
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
     if (idx < 0) return Error_CannotWriteToNMem;
-    ptr = Vec_at_unsafe(&m->pmem, idx, Value);
+    ptr = Vec_at_unsafe(&m->mem, idx, Value);
     if (ptr->type != 'L') return Error_NotInteger;
 
     try(Mem_mem_at(m, ptr->Long, &val));
-    *Vec_at_unsafe(&m->pmem, 0, Value) = val;
+    *Vec_at_unsafe(&m->mem, 0, Value) = val;
 
     // writeValue
     ptr->Long--;
@@ -125,7 +125,7 @@ ltof(const Vec* v, Mem* m, Signal* s)
     long idx;
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
     if (idx < 0) return Error_CannotWriteToNMem;
-    Value* val = Vec_at_unsafe(&m->pmem, idx, Value);
+    Value* val = Vec_at_unsafe(&m->mem, idx, Value);
     if (val->type == 'L'){
         val->Double = val->Long;
     }
@@ -139,7 +139,7 @@ ftol(const Vec* v, Mem* m, Signal* s)
     long idx;
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
     if (idx < 0) return Error_CannotWriteToNMem;
-    Value* val = Vec_at_unsafe(&m->pmem, idx, Value);
+    Value* val = Vec_at_unsafe(&m->mem, idx, Value);
     if (val->type == 'D'){
         val->Long = val->Double;
     }

@@ -87,7 +87,7 @@ exit: exit_code(Value)
 fork: ???
 read: fd(Value), ptr(WPtr), size(Value)  # appends trailing \0. [0] set to bytes written to mem
 write: fd(Value), ptr(Ptr), size(Value)  # read and write ASCIIs. [0] set to bytes written to stream
-open: name(Ptr | Sym), option(Value)  # [0] sets to fd. Files are opened in text mode
+open: name(Ptr), option(Value)  # [0] sets to fd. Files are opened in text mode
 close: fd(Value)
 
 # extra
@@ -105,7 +105,7 @@ src: script_name(Sym)  # source another file, load labels and symbols, don't exe
 
 - [ ] Write more tests
 
-- [ ] Create all the string literals during preprocessing??
+- [x] Create all the string literals during preprocessing??
 
 - [ ] Fix error report
 

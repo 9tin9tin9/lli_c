@@ -48,7 +48,7 @@ fromStr()
     Tok_fromStr(&t, &Str_fromLtl("\"asd\""));
     REQUIRE(Tok_eq(&t, &(Tok){
                 Ltl,
-                .Ltl = Str_fromLtl("asd")
+                .Ltl = HashIdx_new(&Str_fromLtl("asd"), 0)
                 }));
 
     Tok_fromStr(&t, &Str_fromLtl("A"));
@@ -76,7 +76,7 @@ tokenize()
     REQUIRE(strcmp(Str_at(&Vec_at(&toks, 2, Tok)->Var.sym, 0), "asd") == 0);
 
     REQUIRE(Vec_at(&toks, 3, Tok)->tokType == Ltl);
-    REQUIRE(strcmp(Str_at(&Vec_at(&toks, 3, Tok)->Ltl, 0), "asd\"asd") == 0);
+    REQUIRE(strcmp(Str_at(&Vec_at(&toks, 3, Tok)->Ltl.sym, 0), "asd\"asd") == 0);
 }
 
 int

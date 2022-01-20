@@ -2,17 +2,15 @@ allc: 100
 
 # global variables
 # resolving variables is faster than resolving indices
-var: _0, [0]
-var: _1, [1]
-var: _2, [2]
 var: stack, [10]
 mov: $stack, 10
 
 # run main function
 jmp: main
 
-# includes, place after jmp: main
-src: c.lli
+lbl: sum
+    add: $1, $2
+    ret: $stack
 
 # entry point
 lbl: main
@@ -22,13 +20,14 @@ lbl: main
     # loop {
     lbl: loop_start
         # i = sum(i, 1)
-        mov: $_1, $i
-        mov: $_2, 1
+        mov: $1, $i
+        mov: $2, 1
         call: $stack, sum
-        mov: $i, $_0
+        mov: $i, $?
         # if (i == 10000000) break
-        eq: $i, 10000000
-        jc: $_0, loop_end
+        eq: $i, 10
+        jc: $?, loop_end
         jmp: loop_start
     # }
     lbl: loop_end
+    print_num: 1, $i

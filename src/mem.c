@@ -1,105 +1,74 @@
 #include "include/mem.h"
 #include <limits.h>
+#include <stdio.h>
 
 Mem
-Mem_new()
+Mem_new(size_t reg)
 {
     bool fd[1024] = { false };
     fd[0] = fd[1] = fd[2] = true;
-    return (Mem){
-        .pmem = Vec_from(Value, Value(Long, 0)),
-        .nmem = Vec(Value),
+    Mem mem = (Mem){
+        .mem = Vec(Value),
         .varLookUp = Hashmap(),
         .var = Vec(long),
         .labelLookUp = Hashmap(),
         .label = Vec(size_t),
         .fd = _Vec_from(1024, sizeof(bool), fd),
     };
+    Mem_mem_push(&mem, reg+2);
+    Hashmap_insert(&mem.varLookUp, "?", Mem_var_add(&mem, 0));
+    Hashmap_insert(&mem.varLookUp, "*", Mem_var_add(&mem, 1));
+    // declaring numbered registers
+    for (int i = 0; i < reg; i++){
+        char ch[1024];
+        sprintf(ch, "%d", i+1);
+        // [1] reserved for current line number
+        Hashmap_insert(&mem.varLookUp, ch, Mem_var_add(&mem, i+2));
+    }
+    return mem;
 }
 
 Error
 Mem_mem_at(const Mem* self, long i, Value* des)
 {
-    return i < 0 ? 
-        Mem_nmem_at(self, -i, des) : 
-        Mem_pmem_at(self, i, des);
+    if (i < 0) i = -i;
+    Value* a = Vec_at(&self->mem, i, Value);
+    if (!a)
+        return Error_InvalidMemAccess;
+    *des = *a;
+    return Ok;
 }
 
 Error
 Mem_mem_set(Mem* self, long i, Value* v)
 {
-    return i < 0 ?
-        Mem_nmem_set(self, -i, v) :
-        Mem_pmem_set(self, i, v);
-}
-
-Error
-Mem_pmem_at(const Mem* self, size_t i, Value* des)
-{
-    Value* slot = Vec_at(&self->pmem, i, Value);
-    if (!slot) 
+    if (i < 0) i = -i;
+    Value* a = Vec_at(&self->mem, i, Value);
+    if (!a)
         return Error_InvalidMemAccess;
-    *des = *slot;
-    return Ok;
-}
-
-Error
-Mem_pmem_set(Mem* self, size_t i, Value* v)
-{
-    Value* slot = Vec_at(&self->pmem, i, Value);
-    if (!slot)
-        return Error_InvalidMemAccess;
-    *slot = *v;
+    *a = *v;
     return Ok;
 }
 
 size_t
-Mem_pmem_len(const Mem* self)
+Mem_mem_len(const Mem* self)
 {
-    return Vec_count(&self->pmem);
+    return self->mem.size;
 }
 
 void
-Mem_pmem_push(Mem* self, Value* v)
+Mem_mem_push(Mem* self, size_t size)
 {
-    Vec_push(&self->pmem, *v);
-}
-
-Error
-Mem_nmem_at(const Mem* self, size_t i, Value* des)
-{
-    Value* slot = Vec_at(&self->nmem, i-1, Value);
-    if (!slot)
-        return Error_InvalidMemAccess;
-    *des = *slot;
-    return Ok;
-}
-
-Error
-Mem_nmem_set(Mem* self, size_t i, Value* v)
-{
-    Value* slot = Vec_at(&self->nmem, i-1, Value);
-    if (!slot)
-        return Error_InvalidMemAccess;
-    *slot = *v;
-    return Ok;
-}
-
-size_t
-Mem_nmem_len(const Mem* self)
-{
-    return Vec_count(&self->nmem);
-}
-
-void
-Mem_nmem_alloc(Mem* self, const Vec* v){
-    Vec_insert(&self->nmem, v, Vec_count(&self->nmem));
-}
-
-void
-Mem_nmem_push(Mem* self, Value* v)
-{
-    Vec_push(&self->nmem, *v);
+    self->mem.array = realloc(
+            self->mem.array,
+            (self->mem.size+size)*self->mem.elem_size);
+    for (size_t i = self->mem.size; i < self->mem.size+size; i++){
+        memcpy(
+            Vec_at_unsafe(&self->mem, i, Value),
+            &Value(Long, 0),
+            self->mem.elem_size);
+    }
+    self->mem.size += size;
 }
 
 size_t

@@ -62,8 +62,8 @@ Tok_eq(const Tok* left, const Tok* right)
             return HashIdx_eq(&left->Var, &right->Var);
         case Ltl:
             return strcmp(
-                    Str_at(&left->Ltl, 0),
-                    Str_at(&right->Ltl, 0)
+                    Str_at(&left->Ltl.sym, 0),
+                    Str_at(&right->Ltl.sym, 0)
                     ) == 0;
         case Sym:
             return HashIdx_eq(&left->Sym, &right->Sym);
@@ -170,7 +170,7 @@ Tok_fromStr(Tok* tok, Str* s)
         // Ltl
         case '"':
             shrinkStr(s, 1, s->size-2);
-            *tok = Tok(Ltl, *s);
+            *tok = Tok(Ltl, HashIdx_new(s, 0));
             return Ok;
 
         // Sym

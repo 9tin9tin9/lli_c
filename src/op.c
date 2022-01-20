@@ -4,16 +4,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#define addEntry(op) { \
-    Vec_push(&funcVec, &op); \
-    Hashmap_insert(&opIdxTable, #op, Vec_count(&funcVec)-1); \
-}
-
-#define addEntryAlternate(op) { \
-    Vec_push(&funcVec, &op##_); \
-    Hashmap_insert(&opIdxTable, #op, Vec_count(&funcVec)-1); \
-}
-
 Hashmap opIdxTable = Hashmap();
 Vec funcVec = Vec(OpFunc);
 
@@ -33,67 +23,6 @@ print_num(const Vec* v, Mem* m, Signal* s)
     *s = Signal(None, 0);
     return Ok;
 }
-
-void
-op_initOpTable()
-{
-    addEntry(nop);
-
-    addEntry(mov);
-    addEntry(cpy);
-    addEntry(var);
-    addEntry(loc);
-    addEntry(allc);
-    addEntry(push);
-    addEntry(pop);
-    addEntry(ltof);
-    addEntry(ftol);
-
-    addEntry(add);
-    addEntry(sub);
-    addEntry(mul);
-    addEntryAlternate(div);
-    addEntry(mod);
-    addEntry(inc);
-    addEntry(dec);
-    addEntry(addf);
-    addEntry(subf);
-    addEntry(mulf);
-    addEntry(divf);
-    addEntry(incf);
-    addEntry(decf);
-
-    addEntry(eq);
-    addEntry(ne);
-    addEntry(gt);
-    addEntry(lt);
-    addEntry(eqf);
-    addEntry(nef);
-    addEntry(gtf);
-    addEntry(ltf);
-
-    addEntry(and);
-    addEntry(or);
-    addEntry(not);
-
-    addEntry(jmp);
-    addEntry(jc);
-    addEntry(lbl);
-    addEntry(call);
-    addEntry(ret);
-
-    addEntryAlternate(exit);
-    addEntryAlternate(open);
-    addEntryAlternate(close);
-    addEntryAlternate(read);
-    addEntryAlternate(write);
-
-    addEntry(src);
-
-    addEntry(print_num);
-}
-
-#undef addEntry
 
 // Do NOT free Signal
 // Signal.Src is owned by Code
@@ -236,7 +165,8 @@ Tok_getLoc(const Tok* self, Mem* m, long* l)
             return Mem_var_find(m, &self->Var, l);
 
         case Ltl:
-            return Tok_createLtl(self, m, l);
+            *l = -self->Ltl.idx;
+            return Ok;
 
         default:
             return Error_WrongArgType;
@@ -257,16 +187,13 @@ Tok_writeValue(const Tok* self, Mem* m, Value* d)
 }
 
 Error
-Tok_createLtl(const Tok* self, Mem* m, long* i)
+Tok_createLtl(const Tok* self, Mem* m, size_t* i)
 {
-    if (self->tokType != Ltl){
-        return Error_WrongArgType;
+    *i = Mem_mem_len(m);
+    for (int i = 0; i < Str_count(&self->Ltl.sym); i++){
+        Vec_push(&m->mem, Value(Long, *Str_at(&self->Ltl.sym, i)));
     }
-    *i = -(Mem_nmem_len(m)+1);
-    for (int i = 0; i < Str_count(&self->Ltl); i++){
-        Vec_push(&m->nmem, Value(Long, *Str_at(&self->Ltl, i)));
-    }
-    Vec_push(&m->nmem, Value(Long, 0));
+    Vec_push(&m->mem, Value(Long, 0));
     return Ok;
 }
 

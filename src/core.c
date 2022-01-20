@@ -98,7 +98,7 @@ preprocess(Mem* m, Code* c, Vec* toks)
 
 // loop throguh all lines to update HashIdx.idx
 Error
-Code_updateSymIdx(Mem* m, Code* c)
+resolveSym(Mem* m, Code* c)
 {
     const size_t codeLen = Code_len(c);
     size_t* idx;
@@ -118,27 +118,32 @@ Code_updateSymIdx(Mem* m, Code* c)
                 _updateLabel(1);
         }
 
-        // replace Var. Var maybe inside nested Idx
         for (int j = 0; j < Vec_count(&line->toks); j++){
             hi = NULL;
             Tok* tok = Vec_at(&line->toks, j, Tok);
-            if (tok->tokType != Var && tok->tokType != Idx) continue; 
-
-            if (tok->tokType == Idx){
-                struct Idx* idx = &tok->Idx;
-                while(idx->type == Idx_Type_Idx) idx = idx->Idx;
-                if (idx->type == Idx_Type_Num) continue;
-                hi = &idx->Var;
+            // replace Var. Var maybe inside nested Idx
+            if (tok->tokType == Var || tok->tokType == Idx){
+                if (tok->tokType == Idx){
+                    struct Idx* idx = &tok->Idx;
+                    while(idx->type == Idx_Type_Idx) idx = idx->Idx;
+                    if (idx->type == Idx_Type_Num) continue;
+                    hi = &idx->Var;
+                }else{
+                    hi = &Vec_at(&line->toks, j, Tok)->Var;
+                }
+                idx = Hashmap_at(
+                        m->varLookUp, 
+                        Str_raw(&hi->sym), 
+                        size_t);
+                if (!idx)
+                    return Error_UndefinedVar;
+                hi->idx = *idx;
+            }else
+            // create string literals during preprocessing
+            if (tok->tokType == Ltl){
+                try(Tok_createLtl(tok, m, &tok->Sym.idx));
+                tok->Sym.idx = -tok->Sym.idx;
             }
-
-            if (!hi) hi = &Vec_at(&line->toks, j, Tok)->Var;
-            idx = Hashmap_at(
-                    m->varLookUp, 
-                    Str_raw(&hi->sym), 
-                    size_t);
-            if (!idx)
-                return Error_UndefinedVar;
-            hi->idx = *idx;
         }
     }
     Code_ptr_set(c, 0);
@@ -226,7 +231,7 @@ run(Mem* m, Code* c)
 {
     Signal s;
     while(Code_ptr(c) < Code_len(c)){
-        *Vec_at_unsafe(&m->nmem, 0, Value) = Value(Long, Code_ptr(c));
+        *Vec_at_unsafe(&m->mem, 1, Value) = Value(Long, Code_ptr(c));
         try(op_exec(m, c, &s));
         try(Signal_respond(&s, m, c));
     }

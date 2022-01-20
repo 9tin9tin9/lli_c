@@ -49,7 +49,7 @@ call(const Vec* v, Mem* m, Signal* s)
     // getUint
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
     if (idx < 0) return Error_CannotWriteToNMem;
-    ptr = Vec_at_unsafe(&m->pmem, idx, Value);
+    ptr = Vec_at_unsafe(&m->mem, idx, Value);
     if (ptr->type != 'L') return Error_NotInteger;
     if (ptr->Long < 0) return Error_CannotWriteToNMem;
 
@@ -75,7 +75,7 @@ ret(const Vec* v, Mem* m, Signal* s)
     // getUint
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
     if (idx < 0) return Error_CannotWriteToNMem;
-    ptr = Vec_at_unsafe(&m->pmem, idx, Value);
+    ptr = Vec_at_unsafe(&m->mem, idx, Value);
     if (ptr->type != 'L') return Error_NotInteger;
 
     try(Mem_mem_at(m, ptr->Long, &loc));

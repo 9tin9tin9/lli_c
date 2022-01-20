@@ -1,4 +1,4 @@
-#include "../src/include/op.h"
+#include "../src/include/opdef.h"
 #include "test.h"
 
 START_TEST();
@@ -8,7 +8,7 @@ passLexAndExec()
 {
     Vec line = Vec_from(Tok, Tok(Sym, Str_fromLtl("nop")));
     Code c = Code_new();
-    Mem m = Mem_new();
+    Mem m = Mem_new(0);
     Signal s;
 
     op_initOpTable();

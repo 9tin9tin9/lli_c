@@ -54,7 +54,7 @@ typedef struct {
         Value Num;
         struct Idx Idx;
         HashIdx Var;
-        Str Ltl;
+        HashIdx Ltl;
         HashIdx Sym;
         char Eof;
     };

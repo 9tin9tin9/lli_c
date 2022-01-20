@@ -14,7 +14,6 @@ OBJ = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(FILE_NAMES)))
 build:
 	@if [[ ! -e $(TARGETDIR) ]]; then mkdir $(TARGETDIR); echo created \'$(TARGETDIR)\' directory; fi
 	@if [[ ! -e $(OBJDIR)/ ]]; then mkdir $(OBJDIR); echo created \'$(OBJDIR)\' directory; fi
-	@if [[ ! -e $(OBJDIR)/op ]]; then mkdir $(OBJDIR)/op; echo created \'$(OBJDIR)/op\' directory; fi
 	@if [[ ! -e $(BINDIR)/ ]]; then mkdir $(BINDIR); echo created \'$(BINDIR)\' directory; fi
 	@rm -rf $(BINDIR)/*
 	@make all $(SRCDIR)/main

@@ -26,7 +26,6 @@ Error Signal_respond(const Signal*, Mem*, Code*);
 
 typedef Error (*OpFunc)(const Vec*, Mem*, Signal*);
 
-void op_initOpTable();
 Error op_exec(Mem*, const Code*, Signal*);
 
 // Hashmap<const char*, size_t>
@@ -40,7 +39,7 @@ Error Tok_getUint(const Tok*, const Mem*, size_t*);
 Error Tok_getInt(const Tok*, const Mem*, long*);
 Error Tok_getLoc(const Tok*, Mem*, long*);
 Error Tok_writeValue(const Tok*, Mem*, Value*);
-Error Tok_createLtl(const Tok*, Mem*, long*);
+Error Tok_createLtl(const Tok*, Mem*, size_t*);
 Error Tok_getSym(const Tok*, HashIdx*);
 
 #endif

@@ -6,8 +6,7 @@
 #include "lex.h"
 
 typedef struct{
-    Vec pmem;  // Vec<Value>
-    Vec nmem;  // Vec<Value>  Starts at idx:1
+    Vec mem;  // Vec<Value>
     Hashmap varLookUp;  // Hashmap<char*, size_t>  Store index of variable
     Vec var;  // Vec<long>  Store indices that var points to
     Hashmap labelLookUp;  // Hashmap<char*, size_t>
@@ -15,25 +14,15 @@ typedef struct{
     Vec fd;  // Vec<bool>
 }Mem;
 
-Mem Mem_new();
+Mem Mem_new(size_t reg);
 
 Error Mem_mem_at(const Mem*, long, Value*);
 Error Mem_mem_set(Mem*, long, Value*);
-
-Error Mem_pmem_at(const Mem*, size_t, Value*);
-Error Mem_pmem_set(Mem*, size_t, Value*);
-size_t Mem_pmem_len(const Mem*);
-void Mem_pmem_push(Mem*, Value*);
-
-Error Mem_nmem_at(const Mem*, size_t, Value*);
-Error Mem_nmem_set(Mem*, size_t, Value*);
-size_t Mem_nmem_len(const Mem*);
-// Vec will be COPIED
-void Mem_nmem_alloc(Mem*, const Vec*);
-void Mem_nmem_push(Mem*, Value*);
+size_t Mem_mem_len(const Mem*);
+void Mem_mem_push(Mem*, size_t);
 
 // returns the index of inserted var
-size_t Mem_var_add(Mem*, long);
+size_t Mem_var_add(Mem*, long ptr);
 // assume index is always valid
 void Mem_var_set(Mem*, size_t, long);
 Error Mem_var_find(const Mem*, const HashIdx*, long*);

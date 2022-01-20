@@ -67,57 +67,79 @@ enum Opcode{
 
 };
 
-defOp(nop);
+#define addEntry(op) { \
+    defOp(op); \
+    Vec_push(&funcVec, &op); \
+    Hashmap_insert(&opIdxTable, #op, Vec_count(&funcVec)-1); \
+}
 
-defOp(mov);
-defOp(cpy);
-defOp(var);
-defOp(loc);
-defOp(allc);
-defOp(push);
-defOp(pop);
-defOp(ltof);
-defOp(ftol);
+#define addEntryAlternate(op) { \
+    defOp(op##_); \
+    Vec_push(&funcVec, &op##_); \
+    Hashmap_insert(&opIdxTable, #op, Vec_count(&funcVec)-1); \
+}
 
-defOp(add);
-defOp(sub);
-defOp(mul);
-defOp(div_);
-defOp(mod);
-defOp(inc);
-defOp(dec);
-defOp(addf);
-defOp(subf);
-defOp(mulf);
-defOp(divf);
-defOp(incf);
-defOp(decf);
+static inline void
+op_initOpTable()
+{
+    addEntry(nop);
 
-defOp(eq);
-defOp(ne);
-defOp(gt);
-defOp(lt);
-defOp(eqf);
-defOp(nef);
-defOp(gtf);
-defOp(ltf);
+    addEntry(mov);
+    addEntry(cpy);
+    addEntry(var);
+    addEntry(loc);
+    addEntry(allc);
+    addEntry(push);
+    addEntry(pop);
+    addEntry(ltof);
+    addEntry(ftol);
 
-defOp(and);
-defOp(or);
-defOp(not);
+    addEntry(add);
+    addEntry(sub);
+    addEntry(mul);
+    addEntryAlternate(div);
+    addEntry(mod);
+    addEntry(inc);
+    addEntry(dec);
+    addEntry(addf);
+    addEntry(subf);
+    addEntry(mulf);
+    addEntry(divf);
+    addEntry(incf);
+    addEntry(decf);
 
-defOp(jmp);
-defOp(jc);
-defOp(lbl);
-defOp(call);
-defOp(ret);
+    addEntry(eq);
+    addEntry(ne);
+    addEntry(gt);
+    addEntry(lt);
+    addEntry(eqf);
+    addEntry(nef);
+    addEntry(gtf);
+    addEntry(ltf);
 
-defOp(exit_);
-defOp(open_);
-defOp(close_);
-defOp(read_);
-defOp(write_);
+    addEntry(and);
+    addEntry(or);
+    addEntry(not);
 
-defOp(src);
+    addEntry(jmp);
+    addEntry(jc);
+    addEntry(lbl);
+    addEntry(call);
+    addEntry(ret);
+
+    addEntryAlternate(exit);
+    addEntryAlternate(open);
+    addEntryAlternate(close);
+    addEntryAlternate(read);
+    addEntryAlternate(write);
+
+    addEntry(src);
+
+    addEntry(print_num);
+}
+
+#undef addEntry
+
+#undef defOp
 
 #endif
