@@ -38,7 +38,7 @@ write_(const Vec* v, Mem* m, Signal* s)
             return Error_IoError;
         idxIncr(&srcIdx, 1);
     }
-    Mem_mem_set(m, 0, Value(Long, i));
+    Mem_mem_set(m, 0, &Value(Long, i));
     *s = Signal(None, 0);
     return Ok;
 }
@@ -66,9 +66,9 @@ read_(const Vec* v, Mem* m, Signal* s)
     size_t i;
     for (i = 0; i < readSize && i < size; i++){
         Value c = Value(Long, buf[i]);
-        try(Mem_mem_set(m, desIdx+i, c));
+        try(Mem_mem_set(m, desIdx+i, &c));
     }
-    Mem_mem_set(m, 0, Value(Long, i));
+    Mem_mem_set(m, 0, &Value(Long, i));
     *s = Signal(None, 0);
     return Ok;
 }
@@ -160,7 +160,7 @@ open_(const Vec* v, Mem* m, Signal* s)
         return Error_ExceedOpenLimit;
     }
     *slot = true;
-    Mem_mem_set(m, 0, Value(Long, fd));
+    Mem_mem_set(m, 0, &Value(Long, fd));
     *s = Signal(None, 0);
     return Ok;
 }

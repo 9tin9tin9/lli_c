@@ -26,7 +26,7 @@ Mem_mem_at(const Mem* self, long i, Value* des)
 }
 
 Error
-Mem_mem_set(Mem* self, long i, Value v)
+Mem_mem_set(Mem* self, long i, Value* v)
 {
     return i < 0 ?
         Mem_nmem_set(self, -i, v) :
@@ -44,12 +44,12 @@ Mem_pmem_at(const Mem* self, size_t i, Value* des)
 }
 
 Error
-Mem_pmem_set(Mem* self, size_t i, Value v)
+Mem_pmem_set(Mem* self, size_t i, Value* v)
 {
     Value* slot = Vec_at(&self->pmem, i, Value);
     if (!slot)
         return Error_InvalidMemAccess;
-    *slot = v;
+    *slot = *v;
     return Ok;
 }
 
@@ -60,9 +60,9 @@ Mem_pmem_len(const Mem* self)
 }
 
 void
-Mem_pmem_push(Mem* self, Value v)
+Mem_pmem_push(Mem* self, Value* v)
 {
-    Vec_push(&self->pmem, v);
+    Vec_push(&self->pmem, *v);
 }
 
 Error
@@ -76,12 +76,12 @@ Mem_nmem_at(const Mem* self, size_t i, Value* des)
 }
 
 Error
-Mem_nmem_set(Mem* self, size_t i, Value v)
+Mem_nmem_set(Mem* self, size_t i, Value* v)
 {
     Value* slot = Vec_at(&self->nmem, i-1, Value);
     if (!slot)
         return Error_InvalidMemAccess;
-    *slot = v;
+    *slot = *v;
     return Ok;
 }
 
@@ -97,9 +97,9 @@ Mem_nmem_alloc(Mem* self, const Vec* v){
 }
 
 void
-Mem_nmem_push(Mem* self, Value v)
+Mem_nmem_push(Mem* self, Value* v)
 {
-    Vec_push(&self->nmem, v);
+    Vec_push(&self->nmem, *v);
 }
 
 size_t

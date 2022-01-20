@@ -18,19 +18,19 @@ typedef struct{
 Mem Mem_new();
 
 Error Mem_mem_at(const Mem*, long, Value*);
-Error Mem_mem_set(Mem*, long, Value);
+Error Mem_mem_set(Mem*, long, Value*);
 
 Error Mem_pmem_at(const Mem*, size_t, Value*);
-Error Mem_pmem_set(Mem*, size_t, Value);
+Error Mem_pmem_set(Mem*, size_t, Value*);
 size_t Mem_pmem_len(const Mem*);
-void Mem_pmem_push(Mem*, Value);
+void Mem_pmem_push(Mem*, Value*);
 
 Error Mem_nmem_at(const Mem*, size_t, Value*);
-Error Mem_nmem_set(Mem*, size_t, Value);
+Error Mem_nmem_set(Mem*, size_t, Value*);
 size_t Mem_nmem_len(const Mem*);
 // Vec will be COPIED
 void Mem_nmem_alloc(Mem*, const Vec*);
-void Mem_nmem_push(Mem*, Value);
+void Mem_nmem_push(Mem*, Value*);
 
 // returns the index of inserted var
 size_t Mem_var_add(Mem*, long);

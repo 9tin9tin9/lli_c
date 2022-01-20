@@ -58,7 +58,7 @@ call(const Vec* v, Mem* m, Signal* s)
 
     try(Mem_mem_at(m, -1, &curr));
     curr.Long++;
-    try(Mem_mem_set(m, ptr->Long, curr));
+    try(Mem_mem_set(m, ptr->Long, &curr));
     try(Tok_getUint(Vec_at_unsafe(v, 1, Tok), m, &loc));
     *s = Signal(Jmp, loc);
     return Ok;

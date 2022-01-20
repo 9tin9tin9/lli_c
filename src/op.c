@@ -120,7 +120,7 @@ Signal_respond(const Signal* self, Mem* m, Code* c)
             Mem_label_set(m, self->SetLbl, Code_ptr(c)+1);
             break;
         case Signal_Curr:
-            Mem_mem_set(m, 0, Value(Long, Code_ptr(c)));
+            Mem_mem_set(m, 0, &Value(Long, Code_ptr(c)));
             break;
     }
     Code_ptr_incr(c);
@@ -245,7 +245,7 @@ Tok_getLoc(const Tok* self, Mem* m, long* l)
 }
 
 Error
-Tok_writeValue(const Tok* self, Mem* m, Value d)
+Tok_writeValue(const Tok* self, Mem* m, Value* d)
 {
     long idx;
     try(Tok_getLoc(self, m, &idx));

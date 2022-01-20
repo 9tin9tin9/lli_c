@@ -47,7 +47,7 @@ mod(const Vec* v, Mem* m, Signal* s)
     Value left, right;
     try(math_parseArg(v, m, &left, &right));
     long result = left.Long % right.Long;
-    Mem_mem_set(m, 0, Value(Long, result));
+    Mem_mem_set(m, 0, &Value(Long, result));
     *s = Signal(None, 0);
     return Ok;
 }
@@ -59,7 +59,7 @@ mod(const Vec* v, Mem* m, Signal* s)
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &loc)); \
     try(Mem_mem_at(m, loc, &val)); \
     val.Long op; \
-    try(Mem_mem_set(m, loc, val)); \
+    try(Mem_mem_set(m, loc, &val)); \
     *s = Signal(None, 0); \
     return Ok; \
 
@@ -115,7 +115,7 @@ divf(const Vec* v, Mem* m, Signal* s)
     try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &loc)); \
     try(Mem_mem_at(m, loc, &val)); \
     val.Double op; \
-    try(Mem_mem_set(m, loc, val)); \
+    try(Mem_mem_set(m, loc, &val)); \
     *s = Signal(None, 0); \
     return Ok; \
 

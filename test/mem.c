@@ -23,10 +23,10 @@ pmem_set()
 {
     Mem m = Mem_new();
     Value v10 = Value(Long, 10);
-    Error r = Mem_pmem_set(&m, 1, v10);
+    Error r = Mem_pmem_set(&m, 1, &v10);
     REQUIRE(r == Error_InvalidMemAccess);
     Vec_push(&m.pmem, Value(Long, 0));
-    r = Mem_pmem_set(&m, 1, v10);
+    r = Mem_pmem_set(&m, 1, &v10);
     REQUIRE(Value_eq(Vec_at(&m.pmem, 1, Value), &v10));
 }
 
@@ -50,10 +50,10 @@ nmem_set()
 {
     Mem m = Mem_new();
     Value v10 = Value(Long, 10);
-    Error r = Mem_nmem_set(&m, 1, v10);
+    Error r = Mem_nmem_set(&m, 1, &v10);
     REQUIRE(r == Error_InvalidMemAccess);
     Vec_push(&m.nmem, Value(Long, 0));
-    r = Mem_nmem_set(&m, 1, v10);
+    r = Mem_nmem_set(&m, 1, &v10);
     REQUIRE(Value_eq(Vec_at(&m.nmem, 0, Value), &v10));
 }
 
