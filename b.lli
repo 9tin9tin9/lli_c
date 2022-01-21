@@ -8,10 +8,6 @@ mov: $stack, 10
 # run main function
 jmp: main
 
-lbl: sum
-    add: $1, $2
-    ret: $stack
-
 # entry point
 lbl: main
     # var i = 0
@@ -20,12 +16,10 @@ lbl: main
     # loop {
     lbl: loop_start
         # i = sum(i, 1)
-        mov: $1, $i
-        mov: $2, 1
-        call: $stack, sum
+        add: $i, 1
         mov: $i, $?
         # if (i == 10000000) break
-        eq: $i, 10
+        eq: $i, 10000000
         jc: $?, loop_end
         jmp: loop_start
     # }

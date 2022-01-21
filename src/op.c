@@ -5,56 +5,6 @@
 #include <math.h>
 
 Hashmap opIdxTable = Hashmap();
-Vec funcVec = Vec(OpFunc);
-
-Error
-print_num(const Vec* v, Mem* m, Signal* s)
-{
-    argcGuard(v, 2);
-    size_t fd;
-    Value value;
-    try(Tok_getUint(Vec_at(v, 0, Tok), m, &fd));
-    try(Tok_getValue(Vec_at(v, 1, Tok), m, &value));
-    if (value.type == 'D'){
-        fprintf(fdopen(fd, "w"), "%f\n", value.Double);
-    }else{
-        fprintf(fdopen(fd, "w"), "%ld\n", value.Long);
-    }
-    *s = Signal(None, 0);
-    return Ok;
-}
-
-// Do NOT free Signal
-// Signal.Src is owned by Code
-Error
-op_exec(Mem* m, const Code* c, Signal* signal)
-{
-    const Line* l = Code_curr(c);
-    return (*Vec_at_unsafe(&funcVec, l->opcode, OpFunc))(&l->toks, m, signal);
-}
-
-Error
-Code_fromFile(const char* fileName, Mem* m, Code* c);
-
-Error
-Signal_respond(const Signal* self, Mem* m, Code* c)
-{
-    switch (self->type) {
-        case Signal_None:
-            break;
-        case Signal_Jmp:
-            Code_ptr_set(c, self->Jmp);
-            return Ok;
-        case Signal_SetLbl:
-            Mem_label_set(m, self->SetLbl, Code_ptr(c)+1);
-            break;
-        case Signal_Curr:
-            Mem_mem_set(m, 0, &Value(Long, Code_ptr(c)));
-            break;
-    }
-    Code_ptr_incr(c);
-    return Ok;
-}
 
 // Extend Tok
 

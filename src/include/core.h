@@ -25,6 +25,4 @@ Error generator_StrArr(void* state, char** str);
 
 Error resolveSym(Mem* m, Code* c);
 
-Error run(Mem* m, Code* c);
-
 #endif

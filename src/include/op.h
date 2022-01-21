@@ -22,16 +22,9 @@ typedef struct{
     };
 }Signal;
 #define Signal(type_, ...) ((Signal){Signal_##type_, .type_ = __VA_ARGS__})
-Error Signal_respond(const Signal*, Mem*, Code*);
-
-typedef Error (*OpFunc)(const Vec*, Mem*, Signal*);
-
-Error op_exec(Mem*, const Code*, Signal*);
 
 // Hashmap<const char*, size_t>
 extern Hashmap opIdxTable;
-// Vec<OpFunc>
-extern Vec funcVec;
 
 // Extend Tok
 Error Tok_getValue(const Tok*, const Mem*, Value*);

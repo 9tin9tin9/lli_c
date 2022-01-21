@@ -3,7 +3,7 @@
 
 #include "op.h"
 
-#define defOp(name) Error name(const Vec*, Mem*, Signal*)
+Error run(Mem* m, Code* c);
 
 #define argcGuard(v_, n_) { \
     if (v_->size != (n_)) { \
@@ -64,24 +64,19 @@ enum Opcode{
     OPCODE_WRITE,
     
     OPCODE_SRC,
+    OPCODE_PRINT_NUM,
+    OPCODE_HALT,
 
 };
 
 #define addEntry(op) { \
-    defOp(op); \
-    Vec_push(&funcVec, &op); \
-    Hashmap_insert(&opIdxTable, #op, Vec_count(&funcVec)-1); \
-}
-
-#define addEntryAlternate(op) { \
-    defOp(op##_); \
-    Vec_push(&funcVec, &op##_); \
-    Hashmap_insert(&opIdxTable, #op, Vec_count(&funcVec)-1); \
+    Hashmap_insert(&opIdxTable, #op, i++); \
 }
 
 static inline void
 op_initOpTable()
 {
+    int i = 0;
     addEntry(nop);
 
     addEntry(mov);
@@ -97,7 +92,7 @@ op_initOpTable()
     addEntry(add);
     addEntry(sub);
     addEntry(mul);
-    addEntryAlternate(div);
+    addEntry(div);
     addEntry(mod);
     addEntry(inc);
     addEntry(dec);
@@ -127,19 +122,75 @@ op_initOpTable()
     addEntry(call);
     addEntry(ret);
 
-    addEntryAlternate(exit);
-    addEntryAlternate(open);
-    addEntryAlternate(close);
-    addEntryAlternate(read);
-    addEntryAlternate(write);
+    addEntry(exit);
+    addEntry(open);
+    addEntry(close);
+    addEntry(read);
+    addEntry(write);
 
     addEntry(src);
-
     addEntry(print_num);
+    addEntry(OPCODE_HALT);
 }
 
 #undef addEntry
 
-#undef defOp
+#define p(op_) case op_: return #op_;
+
+static inline const char*
+OpCodeStr(enum Opcode op)
+{
+    switch (op){
+        p(OPCODE_NOP)
+        p(OPCODE_MOV)
+        p(OPCODE_CPY)
+        p(OPCODE_VAR)
+        p(OPCODE_LOC)
+        p(OPCODE_ALLC)
+        p(OPCODE_PUSH)
+        p(OPCODE_POP)
+        p(OPCODE_LTOF)
+        p(OPCODE_FTOL)
+        p(OPCODE_ADD)
+        p(OPCODE_SUB)
+        p(OPCODE_MUL)
+        p(OPCODE_DIV)
+        p(OPCODE_MOD)
+        p(OPCODE_INC)
+        p(OPCODE_DEC)
+        p(OPCODE_ADDF)
+        p(OPCODE_SUBF)
+        p(OPCODE_MULF)
+        p(OPCODE_DIVF)
+        p(OPCODE_INCF)
+        p(OPCODE_DECF)
+        p(OPCODE_EQ)
+        p(OPCODE_NE)
+        p(OPCODE_GT)
+        p(OPCODE_LT)
+        p(OPCODE_EQF)
+        p(OPCODE_NEF)
+        p(OPCODE_GTF)
+        p(OPCODE_LTF)
+        p(OPCODE_AND)
+        p(OPCODE_OR)
+        p(OPCODE_NOT)
+        p(OPCODE_JMP)
+        p(OPCODE_JC)
+        p(OPCODE_LBL)
+        p(OPCODE_CALL)
+        p(OPCODE_RET)
+        p(OPCODE_EXIT)
+        p(OPCODE_OPEN)
+        p(OPCODE_CLOSE)
+        p(OPCODE_READ)
+        p(OPCODE_WRITE)
+        p(OPCODE_SRC)
+        p(OPCODE_PRINT_NUM)
+        p(OPCODE_HALT)
+    }
+}
+
+#undef p
 
 #endif

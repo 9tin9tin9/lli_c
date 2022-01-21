@@ -31,7 +31,7 @@ prerun(size_t opcode, Mem* m, Code* c, Vec* toks)
     Str name;
     switch (opcode){
         case OPCODE_LBL:
-            _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(c)+1));
+            _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(c)));
             break;
         
         case OPCODE_VAR:
@@ -222,18 +222,7 @@ Code_from(Mem* m, Code* c, void* _state)
 
         try(preprocess(m, c, &toks));
     }
+    Code_push(c, &Vec(Tok), OPCODE_HALT);
 
-    return Ok;
-}
-
-Error
-run(Mem* m, Code* c)
-{
-    Signal s;
-    while(Code_ptr(c) < Code_len(c)){
-        *Vec_at_unsafe(&m->mem, 1, Value) = Value(Long, Code_ptr(c));
-        try(op_exec(m, c, &s));
-        try(Signal_respond(&s, m, c));
-    }
     return Ok;
 }

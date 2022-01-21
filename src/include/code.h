@@ -6,6 +6,7 @@
 typedef struct{
     size_t opcode;
     Vec toks;
+    void* f;
 }Line;
 
 typedef struct {
