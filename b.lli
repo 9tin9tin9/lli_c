@@ -10,18 +10,18 @@ jmp: main
 
 # entry point
 lbl: main
-    # var i = 0
+    # var ctr = 0
     push: $stack, 0
-    var: i, [$stack]
+    var: ctr, [$stack]
     # loop {
     lbl: loop_start
-        # i = sum(i, 1)
-        add: $i, 1
-        mov: $i, $?
-        # if (i == 10000000) break
-        eq: $i, 10000000
+        # ctr = sum(ctr, 1)
+        add: $ctr, 1
+        mov: $ctr, $?
+        # if (ctr == 10000000) break
+        eq: $ctr, 10000000
         jc: $?, loop_end
         jmp: loop_start
     # }
     lbl: loop_end
-    print_num: 1, $i
+    print_num: 1, $ctr

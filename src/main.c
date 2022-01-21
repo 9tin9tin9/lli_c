@@ -43,7 +43,7 @@ int main(int argc, char** argv){
     exitIfError(run(&m, &c), &c);
     struct timespec run_end = now();
 
-    printf("run: %.3f\n", diff(&run_start, &run_end) / 1.0e9);
+    printf("time: %.3f\n", diff(&run_start, &run_end) / 1.0e9);
 
     return 0;
 }

@@ -4,8 +4,6 @@
 #include <fcntl.h>
 #include <limits.h>
 
-// #define COMPUTED_GOTO
-
 Error
 math_parseArg(const Vec* v, Mem* m, Value* left, Value* right)
 {
@@ -103,31 +101,29 @@ parseOpenOption(size_t oVal, int* oflag)
 }
 
 #define NEXT_INTR(line) l = Code_at(c, line); v = &l->toks;
+#define SET_LINE_ADDR(line) *Vec_at_unsafe(&m->mem, 1, Value) = Value(Long, line);
 
-#ifdef COMPUTED_GOTO
-    #define GOTO(op) goto *jumpTable[op];
-    #define TARGET(op) op:
-    #define DISPATCH() NEXT_INTR(++Code_ptr(c)); goto *jumpTable[l->opcode];
+#if COMPUTED_GOTO
+    #define GOTO(op) DISPATCH()
+    #define TARGET(op) op: SET_LINE_ADDR(Code_ptr(c)-1);
+    #define DISPATCH() NEXT_INTR(Code_ptr(c)++); goto *jumpTable[l->opcode];
 #else
-    #define GOTO(op) switch (op)
-    #define TARGET(op) case op:
-    #define DISPATCH() NEXT_INTR(++Code_ptr(c)); break;
+    #define GOTO(op) NEXT_INTR(Code_ptr(c)); switch (op)
+    #define TARGET(op) case op: SET_LINE_ADDR(Code_ptr(c)-1);
+    #define DISPATCH() NEXT_INTR(Code_ptr(c)++); break;
 #endif
 
 Error
 run(Mem* m, Code* c)
 {
 
-#ifdef COMPUTED_GOTO
+#if COMPUTED_GOTO
 #include "include/jumpTable.h"
 #endif
 
-    const Line* l = Code_curr(c);
-    const Vec* v = &l->toks;
+    const Line* l;
+    const Vec* v;
     while(Code_ptr(c) < Code_len(c)){
-        *Vec_at_unsafe(&m->mem, 1, Value) = Value(Long, Code_ptr(c));
-        l = Code_curr(c);
-        v = &l->toks;
 
         GOTO(l->opcode)
         {
