@@ -45,28 +45,6 @@ math_parseArg(const Vec* v, Mem* m, Value* left, Value* right)
     val.Double op; \
     try(Mem_mem_set(m, loc, &val)); \
 
-#define cmpf(op_, v_, m_) \
-    Value left, right; \
-    try(cmp_parseArg(v_, m_, &left, &right)); \
-    if (left.type == 'L') left.Double = left.Long; \
-    if (right.type == 'L') right.Double = right.Long; \
-    double result = left.Double op_ right.Double; \
-    *Vec_at_unsafe(&m_->mem, 0, Value) = Value(Double, result); \
-
-Error
-cmp_parseArg(const Vec* v, Mem* m, Value* left, Value* right)
-{
-    argcGuard(v, 2);
-    try(Tok_getValue(Vec_at_unsafe(v, 0, Tok), m, left));
-    return Tok_getValue(Vec_at_unsafe(v, 1, Tok), m, right);
-}
-
-#define cmp(op_, v_, m_) \
-    Value left, right; \
-    try(cmp_parseArg(v_, m_, &left, &right)); \
-    long result = left.Long op_ right.Long; \
-    *Vec_at_unsafe(&m_->mem, 0, Value) = Value(Long, result); \
-
 enum OpenOptions {
     OO_READ = 0, OO_WRITE, OO_APPEND,
     OO_TRUNCATE, OO_CREATE, OO_CREATE_NEW
@@ -350,49 +328,49 @@ run(Mem* m, Code* c)
 
             TARGET(OPCODE_EQ)
             {
-                cmp(==, v, m);
+                math(==, v, m);
                 DISPATCH()
             }
 
             TARGET(OPCODE_NE)
             {
-                cmp(!=, v, m);
+                math(!=, v, m);
                 DISPATCH()
             }
 
             TARGET(OPCODE_GT)
             {
-                cmp(>, v, m);
+                math(>, v, m);
                 DISPATCH()
             }
 
             TARGET(OPCODE_LT)
             {
-                cmp(<, v, m);
+                math(<, v, m);
                 DISPATCH()
             }
 
             TARGET(OPCODE_EQF)
             {
-                cmpf(==, v, m);
+                mathf(==, v, m);
                 DISPATCH()
             }
 
             TARGET(OPCODE_NEF)
             {
-                cmpf(!=, v, m);
+                mathf(!=, v, m);
                 DISPATCH()
             }
 
             TARGET(OPCODE_GTF)
             {
-                cmpf(>, v, m);
+                mathf(>, v, m);
                 DISPATCH()
             }
 
             TARGET(OPCODE_LTF)
             {
-                cmpf(<, v, m);
+                mathf(<, v, m);
                 DISPATCH()
             }
 
