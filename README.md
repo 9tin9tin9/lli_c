@@ -101,6 +101,12 @@ src: script_name(Sym)  # source another file, load labels and symbols, don't exe
 ## TODO
 - [x] Implement all the functions listed in Predefined Function Section (Will not implement fork in near future)
 
+- [ ] Create typed ops for all combinations of types of arguments
+
+- [ ] Change sys ops to sys calls
+
+- [ ] Add tracing JIT (No idea how to implement. Reference: Pypy)
+
 - [ ] Implement Character
 
 - [ ] Write more tests
@@ -108,8 +114,6 @@ src: script_name(Sym)  # source another file, load labels and symbols, don't exe
 - [x] Create all the string literals during preprocessing??
 
 - [ ] Fix error report
-
-- [ ] Move argc check to preprocess time
 
 ## Implement note
 
