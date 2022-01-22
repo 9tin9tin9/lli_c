@@ -16,6 +16,13 @@ Tok_getValue(const Tok* self, const Mem* m, Value* d)
             *d = self->Num;
             return Ok;
 
+        case Var: {
+            // Find where Var points to 
+            long i;
+            try(Mem_var_find(m, &self->Var, &i));
+            return Mem_mem_at(m, i, d);
+            }
+
         case Idx: {
             const struct Idx* idx = &self->Idx;
             size_t layer = 0;
@@ -39,13 +46,6 @@ Tok_getValue(const Tok* self, const Mem* m, Value* d)
                 try(Mem_mem_at(m, d->Long, d));
             }
             return Ok;
-            }
-
-        case Var: {
-            // Find where Var points to 
-            long i;
-            try(Mem_var_find(m, &self->Var, &i));
-            return Mem_mem_at(m, i, d);
             }
 
         case Sym: {
@@ -87,6 +87,9 @@ Error
 Tok_getLoc(const Tok* self, Mem* m, long* l)
 {
     switch (self->tokType){
+        case Var:
+            return Mem_var_find(m, &self->Var, l);
+
         case Idx:
             ;const struct Idx* idx = &self->Idx;
             long layer = 0;
@@ -110,9 +113,6 @@ Tok_getLoc(const Tok* self, Mem* m, long* l)
                 *l = d.Long;
             }
             return Ok;
-
-        case Var:
-            return Mem_var_find(m, &self->Var, l);
 
         case Ltl:
             *l = -self->Ltl.idx;
