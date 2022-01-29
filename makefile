@@ -1,6 +1,6 @@
 CC = gcc-11 -D COMPUTED_GOTO=0
 FSANFLAG =# -fsanitize=address -fsanitize=alignment 
-OPTFLAG = -g -O3 -fno-fast-math -flto -fjump-tables
+OPTFLAG = -g -O0 -fno-fast-math -flto -fjump-tables
 STDFLAG = -std=c11
 CFLAGS = $(STDFLAG) $(FSANFLAG) $(OPTFLAG) -pipe -I./src/include/chaos-pp
 FILE_NAMES = error lex mem op core opdef sys

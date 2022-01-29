@@ -232,6 +232,7 @@ Code_from(Mem* m, Code* c, void* _state)
         try(lex_tokenize(&toks, &wrapper));
 
         try(preprocess(m, c, &toks));
+        Code_ptr_incr(c);
     }
     Code_push(c, &Vec(Tok), OPCODE_HALT_);
 

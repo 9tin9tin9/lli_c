@@ -1,0 +1,31 @@
+size
+var: ptr, [$?]
+allc: 1000
+mov: $ptr, $?
+
+# open
+loc: "syscall_example.lli"
+mov: $1, $?
+mov: $2, 1
+sys: 3
+
+push: $ptr, $?
+var: fd, [$ptr]
+
+# read file
+mov: $1, $fd
+push: $ptr, 0
+mov: $2, $ptr
+mov: $3, 500
+sys: 1
+# $ptr should be incremented by the size read. However no more values will be pushed to the stack anymore, therefore it is not incremented here.
+
+# write to stdout
+mov: $1, 1
+mov: $2, $ptr
+mov: $3, 500
+sys: 2
+
+# close file
+mov: $1, $fd
+sys: 4

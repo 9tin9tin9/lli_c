@@ -36,6 +36,7 @@
 # memory management
 mov: des(WPtr), src(Value)  # assignment, read value
 cpy: des(WPtr), src(Ptr), size(Value)  # memcpy. When src = Ltl, a new ltl is created and its idx is used as src idx
+size:  # write the size of [0]
 var: name(Sym), idx(Ptr)  # Creates or update $name with index = idx
 loc: ptr(Ptr)  # writes the ptr as value to [0]
 allc: size(Value)  # Push slots to pmem
@@ -82,13 +83,7 @@ lbl: lbl(Sym)  # set label.
 call: idx(WPtr), lbl(Value)  # increments idx, assigns [-1]+1 to idx, and jumps to lbl
 ret: idx(WPtr)  # decrements pointer by one, and jumps to idx
 
-# sys
-exit: exit_code(Value)
-fork: ???
-read: fd(Value), ptr(WPtr), size(Value)  # appends trailing \0. [0] set to bytes written to mem
-write: fd(Value), ptr(Ptr), size(Value)  # read and write ASCIIs. [0] set to bytes written to stream
-open: name(Ptr), option(Value)  # [0] sets to fd. Files are opened in text mode
-close: fd(Value)
+sys: syscallcode(Value)  # pass arguments to registers
 
 # extra
 # added for either debug or simplify instructions
@@ -97,6 +92,43 @@ print_num: fd(Value), val(Value)
 # extern
 src: script_name(Sym)  # source another file, load labels and symbols, don't execute
 ```
+
+## Sys Calls
+```
+exit(0): exit\_code(Value)
+read(1): fd(Value), ptr(WPtr), size(Value)  # appends trailing \0. [0] set to bytes written to mem
+write(2): fd(Value), ptr(Ptr), size(Value)  # read and write ASCIIs. [0] set to bytes written to stream
+open(3): name(Ptr), option(Value)  # [0] sets to fd. Files are opened in text mode
+close(4): fd(Value)
+```
+
+## Open option
+Number consisting 6 or less digits
+
+ \_ \_ \_ \_ \_ \_<br>
+ 6 5 4 3 2 1
+
+ 1: read<br>
+ 2: write<br>
+ 3: append<br>
+ 4: truncate<br>
+ 5: create<br>
+ 6: create\_new<br>
+
+ All digits should be either be 0 or 1, representing boolean value.<br>
+ Boolean values are originally passed to std::fs::OpenOptions.<br>
+ Read rust docs for more details about each option.<br>
+
+ Example: opening text.txt in read only mode<br>
+ ```
+ mov: $1, "text.txt"
+ mov: $2 ,1
+ sys: 3
+ ```
+
+ Example: opening text.txt in write-only mode, create file if it does not exists, and will truncate it if it does.
+ `open:"text.txt",11010`
+
 
 ## TODO
 - [x] Implement all the functions listed in Predefined Function Section (Will not implement fork in near future)
@@ -117,4 +149,4 @@ src: script_name(Sym)  # source another file, load labels and symbols, don't exe
 
 ## Implement note
 
-This interpreter was originally writen in rust.
+This interpreter was originally writen in rust. But the performance of the C version is a lot better, so the rust version was abandoned.

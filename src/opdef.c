@@ -523,6 +523,12 @@ run(Mem* m, Code* c)
 
             GENERATE(DEF_OPCODE_MOV, OPCODE_MOV, OPCODE_MOV_ARG())
             GENERATE(DEF_OPCODE_CPY, OPCODE_CPY, OPCODE_CPY_ARG())
+            TARGET(OPCODE_SIZE_)
+            {
+                *Vec_at_unsafe(&m->mem, 0, Value) =
+                    Value(Long, Mem_mem_len(m));
+                DISPATCH()
+            }
             GENERATE(DEF_OPCODE_VAR, OPCODE_VAR, OPCODE_VAR_ARG())
             GENERATE(DEF_OPCODE_LOC, OPCODE_LOC, OPCODE_LOC_ARG())
             GENERATE(DEF_OPCODE_ALLC, OPCODE_ALLC, OPCODE_ALLC_ARG())
