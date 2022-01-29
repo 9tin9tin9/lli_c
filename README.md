@@ -76,10 +76,10 @@ or: left(Value), right(Value)  # ||
 not: bool(Value)  # !
 
 # control flow
-jmp: loc(Sym | Value)  # unconditional jmp, accepts label or line number(uint)
-jc: cond(Value), lbl(Sym)  # jump if cond is true
+jmp: loc(Value)  # unconditional jmp, accepts label or line number(uint)
+jc: cond(Value), lbl(Value)  # jump if cond is true
 lbl: lbl(Sym)  # set label.
-call: idx(WPtr), lbl(Sym)  # increments idx, assigns [-1]+1 to idx, and jumps to lbl
+call: idx(WPtr), lbl(Value)  # increments idx, assigns [-1]+1 to idx, and jumps to lbl
 ret: idx(WPtr)  # decrements pointer by one, and jumps to idx
 
 # sys

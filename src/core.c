@@ -23,6 +23,8 @@
         return Error_DuplicatedSymbols;  \
     }  \
 
+#define CASE(s, product, data) case CHAOS_PP_SEQ_CONCAT(product):
+
 Error
 prerun(size_t opcode, Mem* m, Code* c, Vec* toks)
 {
@@ -30,15 +32,15 @@ prerun(size_t opcode, Mem* m, Code* c, Vec* toks)
     size_t* idx;
     Str name;
     switch (opcode){
-        case OPCODE_LBL:
+        GENERATE(CASE,OPCODE_LBL,OPCODE_LBL_ARG())
             _findAndUpdate(labelLookUp, Mem_label_add(m, Code_len(c)));
             break;
         
-        case OPCODE_VAR:
+        GENERATE(CASE,OPCODE_VAR,OPCODE_VAR_ARG())
             _findAndUpdate(varLookUp, Mem_var_add(m, 0));
             break;
 
-        case OPCODE_SRC:
+        GENERATE(CASE,OPCODE_SRC,OPCODE_SRC_ARG())
             name = Vec_at(toks, 0, Tok)->Sym.sym;
             try(Code_from(m, c, Generator_File(name.array)));
             break;
@@ -57,10 +59,19 @@ preprocess(Mem* m, Code* c, Vec* toks)
 
     // get opcode
     Tok* opTok = Vec_at(toks, 0, Tok);
+    // generate op name
+    char name[100] = {0};
+    strcpy(name, opTok->Sym.sym.array);
+    name[strlen(name)] = '_';
+    const size_t len = Vec_count(toks);
+    for (int i = 1; i < len; i++){
+        strcpy(&name[strlen(name)], \
+               Tok_toStr(Vec_at_unsafe(toks, i, Tok)));
+    }
     // guaranteed to be tokType == Sym
     size_t* opcode = Hashmap_at(
             opIdxTable, 
-            opTok->Sym.sym.array,
+            name,
             size_t
             );
     if (!opcode){
@@ -108,13 +119,13 @@ resolveSym(Mem* m, Code* c)
         HashIdx* hi = &Vec_at(&line->toks, 0, Tok)->Sym;
 
         switch (line->opcode) {
-            case OPCODE_JMP:
+            GENERATE(CASE,OPCODE_JMP,OPCODE_JMP_ARG())
                 _updateLabel(0);
 
-            case OPCODE_JC:
+            GENERATE(CASE,OPCODE_JC,OPCODE_JC_ARG())
                 _updateLabel(1);
 
-            case OPCODE_CALL:
+            GENERATE(CASE,OPCODE_CALL,OPCODE_CALL_ARG())
                 _updateLabel(1);
         }
 
@@ -222,7 +233,7 @@ Code_from(Mem* m, Code* c, void* _state)
 
         try(preprocess(m, c, &toks));
     }
-    Code_push(c, &Vec(Tok), OPCODE_HALT);
+    Code_push(c, &Vec(Tok), OPCODE_HALT_);
 
     return Ok;
 }

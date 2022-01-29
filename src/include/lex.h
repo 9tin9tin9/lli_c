@@ -5,6 +5,7 @@
 #include "container/vec.h"
 #include "container/str.h"
 #include "error.h"
+#include <chaos/preprocessor/string/core.h>
 
 typedef struct {
     enum {
@@ -67,5 +68,28 @@ int HashIdx_eq(const HashIdx* left, const HashIdx* right);
 Error Tok_fromStr(Tok*, Str*);
 // Str: read only
 Error lex_tokenize(Vec* des, const Str* s);
+
+static inline const char* Tok_toStr(const Tok* self)
+{
+    switch (self->tokType){
+        case Num:
+            return "Num";
+        case Idx:
+            return "Idx";
+        case Var:
+            return "Var";
+        case Ltl:
+            return "Ltl";
+        case Sym:
+            return "Sym";
+        case Eof:
+            return "Eof";
+    }
+}
+
+#define NOARG (CHAOS_PP_SEQ) ()
+#define VALUE (CHAOS_PP_SEQ) (Num)(Idx)(Var)(Sym)
+#define PTR (CHAOS_PP_SEQ) (Idx)(Var)(Ltl)
+#define SYM (CHAOS_PP_SEQ) (Sym)
 
 #endif

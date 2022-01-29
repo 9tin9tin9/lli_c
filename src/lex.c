@@ -191,7 +191,7 @@ eat_token(
     enum State{
         WAITING = 'W',
         STRLTL = 'L',
-        SYM = 'S',
+        SYMBOL = 'S',
         ENDED = 'E',
     };
     enum State state = WAITING;
@@ -219,7 +219,7 @@ eat_token(
         }else if (*c == delim){
             if (state == WAITING){
                 return Error_EmptyToken;
-            }else if (state == SYM || state == ENDED){
+            }else if (state == SYMBOL || state == ENDED){
                 break;
             }
 
@@ -251,7 +251,7 @@ eat_token(
             }
 
         }else if (state == WAITING){
-            state = SYM;
+            state = SYMBOL;
 
         }else if (escaped){
             switch (*c) {

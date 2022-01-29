@@ -1,82 +1,6 @@
 #include "include/opdef.h"
+#include "include/sys.h"
 #include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <limits.h>
-
-Error
-math_parseArg(const Vec* v, Mem* m, Value* left, Value* right)
-{
-    argcGuard(v, 2);
-    try(Tok_getValue(Vec_at_unsafe(v, 0, Tok), m, left));
-    try(Tok_getValue(Vec_at_unsafe(v, 1, Tok), m, right));
-    return Ok;
-}
-
-#define math(op_, v_, m_) \
-    Value left, right; \
-    try(math_parseArg(v_, m_, &left, &right)); \
-    long result = left.Long op_ right.Long; \
-    *Vec_at_unsafe(&m_->mem, 0, Value) = Value(Long, result); \
-
-#define incrDecr(op, v, m) \
-    argcGuard(v, 1); \
-    Value val; \
-    long loc; \
-    try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &loc)); \
-    try(Mem_mem_at(m, loc, &val)); \
-    val.Long op; \
-    try(Mem_mem_set(m, loc, &val)); \
-
-#define mathf(op_, v_, m_) \
-    Value left, right; \
-    try(math_parseArg(v_, m_, &left, &right)); \
-    if (left.type == 'L') left.Double = left.Long; \
-    if (right.type == 'L') right.Double = right.Long; \
-    double result = left.Double op_ right.Double; \
-    *Vec_at_unsafe(&m_->mem, 0, Value) = Value(Double, result); \
-
-#define incrDecrf(op, v, m) \
-    argcGuard(v, 1); \
-    Value val; \
-    long loc; \
-    try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &loc)); \
-    try(Mem_mem_at(m, loc, &val)); \
-    val.Double op; \
-    try(Mem_mem_set(m, loc, &val)); \
-
-enum OpenOptions {
-    OO_READ = 0, OO_WRITE, OO_APPEND,
-    OO_TRUNCATE, OO_CREATE, OO_CREATE_NEW
-};
-
-Error
-parseOpenOption(size_t oVal, int* oflag)
-{
-    char options[6] = {0};
-    for (int i = 0; i < 6; i++){
-        char o = oVal%10;
-        if (o > 1){
-            return Error_InvalidOpenOption;
-        }
-        options[i] = o;
-        oVal /= 10;
-    }
-    const char wr = options[OO_READ] + options[OO_WRITE];
-    switch (wr){
-        case 0:
-            return Error_InvalidOpenOption;
-        case 1:
-            *oflag = options[OO_READ] ? O_RDONLY : O_WRONLY; break;
-        case 2:
-            *oflag = O_RDWR; break;
-    }
-    if (options[OO_APPEND]) *oflag |= O_APPEND;
-    if (options[OO_TRUNCATE]) *oflag |= O_TRUNC;
-    if (options[OO_CREATE]) *oflag |= O_CREAT;
-    if (options[OO_CREATE_NEW]) *oflag |= O_CREAT | O_EXCL;
-    return Ok;
-}
 
 #define NEXT_INTR(line) l = Code_at(c, line); v = &l->toks;
 #define SET_LINE_ADDR(line) *Vec_at_unsafe(&m->mem, 1, Value) = Value(Long, line);
@@ -90,6 +14,487 @@ parseOpenOption(size_t oVal, int* oflag)
     #define TARGET(op) case op: SET_LINE_ADDR(Code_ptr(c)-1);
     #define DISPATCH() NEXT_INTR(Code_ptr(c)++); break;
 #endif
+
+#define _DEF_OPCODE_MOV(t0, t1) \
+            TARGET(OPCODE_MOV_##t0##t1) \
+            { \
+                Value val; \
+                try(Tok_getValue(t1, Vec_at_unsafe(v, 1, Tok), m, &val)); \
+                try(Tok_writeValue(t0, Vec_at_unsafe(v, 0, Tok), m, &val)); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_MOV(s, product, d) _DEF_OPCODE_MOV CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_CPY(t0, t1, t2) \
+            TARGET(OPCODE_CPY_##t0##t1##t2) \
+            { \
+                long des; \
+                try(Tok_getLoc(t0, Vec_at_unsafe(v, 0, Tok), m, &des)); \
+                long src; \
+                try(Tok_getLoc(t1, Vec_at_unsafe(v, 1, Tok), m, &src)); \
+                Value size; \
+                try(Tok_getValue(t2, Vec_at_unsafe(v, 2, Tok), m, &size)); \
+                \
+                Value val; \
+                for (size_t i = 0; i < size.Long; i++){ \
+                    try(Mem_mem_at(m, src, &val)); \
+                    try(Tok_writeValue(Idx, &Tok(Idx, des), m, &val)); \
+                    idxIncr(&des, 1); \
+                    idxIncr(&src, 1); \
+                } \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_CPY(s, product, d) _DEF_OPCODE_CPY CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_VAR(t0, t1) \
+            TARGET(OPCODE_VAR_##t0##t1) \
+            { \
+                HashIdx var; \
+                long idx; \
+                try(Tok_getSym(Vec_at_unsafe(v, 0, Tok), &var)); \
+                try(Tok_getLoc(t1, Vec_at_unsafe(v, 1, Tok), m, &idx)); \
+                Mem_var_set(m, var.idx, idx); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_VAR(s, product, d) _DEF_OPCODE_VAR CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_LOC(t0) \
+            TARGET(OPCODE_LOC_##t0) \
+            { \
+                long i; \
+                try(Tok_getLoc(t0, Vec_at_unsafe(v, 0, Tok), m, &i)); \
+                *Vec_at_unsafe(&m->mem, 0, Value) = Value(Long, i); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_LOC(s, product, d) _DEF_OPCODE_LOC CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_ALLC(t0) \
+            TARGET(OPCODE_ALLC_##t0) \
+            { \
+                Tok* sizeTok = Vec_at_unsafe(v, 0, Tok); \
+                Value sizeS; \
+                try(Tok_getValue(t0, sizeTok, m, &sizeS)); \
+                for (int i = 0; i < sizeS.Long; i++){ \
+                    Mem_mem_push(m, 1); \
+                } \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_ALLC(s, product, d) _DEF_OPCODE_ALLC CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+            
+#define _DEF_OPCODE_PUSH(t0, t1) \
+            TARGET(OPCODE_PUSH_##t0##t1) \
+            { \
+                long idx; \
+                Value* ptr; \
+                Value val; \
+                /* getValue */ \
+                try(Tok_getLoc(t0, Vec_at_unsafe(v, 0, Tok), m, &idx)); \
+                if (idx < 0) return Error_CannotWriteToNMem; \
+                ptr = Vec_at_unsafe(&m->mem, idx, Value); \
+                if (ptr->Long < 0) return Error_CannotWriteToNMem; \
+                /* writeValue */\
+                ptr->Long++; \
+                try(Tok_getValue(t1, Vec_at_unsafe(v, 1, Tok), m, &val)); \
+                try(Mem_mem_set(m, ptr->Long, &val)); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_PUSH(s, product, d) _DEF_OPCODE_PUSH CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_POP(t0) \
+            TARGET(OPCODE_POP_##t0) \
+            { \
+                long idx; \
+                Value* ptr; \
+                Value val; \
+                /* getUint */\
+                try(Tok_getLoc(t0, Vec_at_unsafe(v, 0, Tok), m, &idx)); \
+                if (idx < 0) return Error_CannotWriteToNMem; \
+                ptr = Vec_at_unsafe(&m->mem, idx, Value); \
+                if (ptr->Long < 0) return Error_CannotWriteToNMem; \
+                try(Mem_mem_at(m, ptr->Long, &val)); \
+                *Vec_at_unsafe(&m->mem, 0, Value) = val; \
+                /* writeValue */\
+                ptr->Long--; \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_POP(s, product, d) _DEF_OPCODE_POP CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_LTOF(t0) \
+            TARGET(OPCODE_LTOF_##t0) \
+            { \
+                long idx; \
+                try(Tok_getLoc(t0, Vec_at_unsafe(v, 0, Tok), m, &idx)); \
+                if (idx < 0) return Error_CannotWriteToNMem; \
+                Value* val = Vec_at_unsafe(&m->mem, idx, Value); \
+                if (val->type == 'L'){ \
+                    val->Double = val->Long; \
+                } \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_LTOF(s, product, d) _DEF_OPCODE_LTOF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_FTOL(t0) \
+            TARGET(OPCODE_FTOL_##t0) \
+            { \
+                long idx; \
+                try(Tok_getLoc(t0, Vec_at_unsafe(v, 0, Tok), m, &idx)); \
+                if (idx < 0) return Error_CannotWriteToNMem; \
+                Value* val = Vec_at_unsafe(&m->mem, idx, Value); \
+                if (val->type == 'D'){ \
+                    val->Long = val->Double; \
+                } \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_FTOL(s, product, d) _DEF_OPCODE_FTOL CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define math_parseArg(v, m, t0, t1, l, r) \
+    try(Tok_getValue(t0, Vec_at_unsafe(v, 0, Tok), m, l)); \
+    try(Tok_getValue(t1, Vec_at_unsafe(v, 1, Tok), m, r));
+
+#define math(op_, v_, m_, t0, t1) \
+    Value left, right; \
+    math_parseArg(v_, m_, t0, t1, &left, &right); \
+    long result = left.Long op_ right.Long; \
+    *Vec_at_unsafe(&m_->mem, 0, Value) = Value(Long, result); \
+
+#define incrDecr(op, v, m, t0) \
+    Value val; \
+    long loc; \
+    try(Tok_getLoc(t0, Vec_at_unsafe(v, 0, Tok), m, &loc)); \
+    try(Mem_mem_at(m, loc, &val)); \
+    val.Long op; \
+    try(Mem_mem_set(m, loc, &val)); \
+
+#define mathf(op_, v_, m_, t0, t1) \
+    Value left, right; \
+    math_parseArg(v_, m_, t0, t1, &left, &right); \
+    if (left.type == 'L') left.Double = left.Long; \
+    if (right.type == 'L') right.Double = right.Long; \
+    double result = left.Double op_ right.Double; \
+    *Vec_at_unsafe(&m_->mem, 0, Value) = Value(Double, result); \
+
+#define incrDecrf(op, v, m, t0) \
+    Value val; \
+    long loc; \
+    try(Tok_getLoc(t0, Vec_at_unsafe(v, 0, Tok), m, &loc)); \
+    try(Mem_mem_at(m, loc, &val)); \
+    val.Double op; \
+    try(Mem_mem_set(m, loc, &val)); \
+
+#define _DEF_OPCODE_ADD(t0, t1) \
+            TARGET(OPCODE_ADD_##t0##t1) \
+            { \
+                math(+, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_ADD(s, product, d) _DEF_OPCODE_ADD CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_SUB(t0, t1) \
+            TARGET(OPCODE_SUB_##t0##t1) \
+            { \
+                math(-, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_SUB(s, product, d) _DEF_OPCODE_SUB CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_MUL(t0, t1) \
+            TARGET(OPCODE_MUL_##t0##t1) \
+            { \
+                math(*, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_MUL(s, product, d) _DEF_OPCODE_MUL CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_DIV(t0, t1) \
+            TARGET(OPCODE_DIV_##t0##t1) \
+            { \
+                math(*, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_DIV(s, product, d) _DEF_OPCODE_DIV CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_MOD(t0, t1) \
+            TARGET(OPCODE_MOD_##t0##t1) \
+            { \
+                math(%, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_MOD(s, product, d) _DEF_OPCODE_MOD CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_INC(t0) \
+            TARGET(OPCODE_INC_##t0) \
+            { \
+                incrDecr(++, v, m, t0); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_INC(s, product, d) _DEF_OPCODE_INC CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_DEC(t0) \
+            TARGET(OPCODE_DEC_##t0) \
+            { \
+                incrDecr(--, v, m, t0); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_DEC(s, product, d) _DEF_OPCODE_DEC CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_ADDF(t0, t1) \
+            TARGET(OPCODE_ADDF_##t0##t1) \
+            { \
+                mathf(+, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_ADDF(s, product, d) _DEF_OPCODE_ADDF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_SUBF(t0, t1) \
+            TARGET(OPCODE_SUBF_##t0##t1) \
+            { \
+                mathf(-, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_SUBF(s, product, d) _DEF_OPCODE_SUBF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_MULF(t0, t1) \
+            TARGET(OPCODE_MULF_##t0##t1) \
+            { \
+                mathf(*, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_MULF(s, product, d) _DEF_OPCODE_MULF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_DIVF(t0, t1) \
+            TARGET(OPCODE_DIVF_##t0##t1) \
+            { \
+                mathf(*, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_DIVF(s, product, d) _DEF_OPCODE_DIVF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_INCF(t0) \
+            TARGET(OPCODE_INCF_##t0) \
+            { \
+                incrDecrf(++, v, m, t0); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_INCF(s, product, d) _DEF_OPCODE_INCF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_DECF(t0) \
+            TARGET(OPCODE_DECF_##t0) \
+            { \
+                incrDecrf(--, v, m, t0); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_DECF(s, product, d) _DEF_OPCODE_DECF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_EQ(t0, t1) \
+            TARGET(OPCODE_EQ_##t0##t1) \
+            { \
+                math(==, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_EQ(s, product, d) _DEF_OPCODE_EQ CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_NE(t0, t1) \
+            TARGET(OPCODE_NE_##t0##t1) \
+            { \
+                math(!=, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_NE(s, product, d) _DEF_OPCODE_NE CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_GT(t0, t1) \
+            TARGET(OPCODE_GT_##t0##t1) \
+            { \
+                math(>, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_GT(s, product, d) _DEF_OPCODE_GT CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_LT(t0, t1) \
+            TARGET(OPCODE_LT_##t0##t1) \
+            { \
+                math(<, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_LT(s, product, d) _DEF_OPCODE_LT CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_EQF(t0, t1) \
+            TARGET(OPCODE_EQF_##t0##t1) \
+            { \
+                mathf(==, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_EQF(s, product, d) _DEF_OPCODE_EQF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_NEF(t0, t1) \
+            TARGET(OPCODE_NEF_##t0##t1) \
+            { \
+                mathf(!=, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_NEF(s, product, d) _DEF_OPCODE_NEF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_GTF(t0, t1) \
+            TARGET(OPCODE_GTF_##t0##t1) \
+            { \
+                mathf(>, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_GTF(s, product, d) _DEF_OPCODE_GTF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_LTF(t0, t1) \
+            TARGET(OPCODE_LTF_##t0##t1) \
+            { \
+                mathf(<, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_LTF(s, product, d) _DEF_OPCODE_LTF CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_AND(t0, t1) \
+            TARGET(OPCODE_AND_##t0##t1) \
+            { \
+                math(&&, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_AND(s, product, d) _DEF_OPCODE_AND CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_OR(t0, t1) \
+            TARGET(OPCODE_OR_##t0##t1) \
+            { \
+                math(||, v, m, t0, t1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_OR(s, product, d) _DEF_OPCODE_OR CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_NOT(t0)  \
+            TARGET(OPCODE_NOT_##t0) \
+            { \
+                Value value; \
+                try(Tok_getValue(t0, Vec_at_unsafe(v, 0, Tok), m, &value)); \
+                long result = value.Long == 0; \
+                *Vec_at_unsafe(&m->mem, 0, Value) = Value(Long, result); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_NOT(s, product, d) _DEF_OPCODE_NOT CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_JMP(t0) \
+            TARGET(OPCODE_JMP_##t0) \
+            { \
+                Value loc; \
+                try(Tok_getValue(t0, Vec_at_unsafe(v, 0, Tok), m, &loc)); \
+                Code_ptr_set(c, loc.Long-1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_JMP(s, product, d) _DEF_OPCODE_JMP CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_JC(t0, t1) \
+            TARGET(OPCODE_JC_##t0##t1) \
+            { \
+                Value cond; \
+                try(Tok_getValue(t0, Vec_at_unsafe(v, 0, Tok), m, &cond)); \
+                if (cond.Long){ \
+                    Value loc; \
+                    try(Tok_getValue(t1, Vec_at_unsafe(v, 1, Tok), m, &loc)); \
+                    Code_ptr_set(c, loc.Long-1); \
+                } \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_JC(s, product, d) _DEF_OPCODE_JC CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_LBL(t0) \
+            TARGET(OPCODE_LBL_##t0) \
+                DISPATCH()
+#define DEF_OPCODE_LBL(s, product, d) _DEF_OPCODE_LBL CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_CALL(t0, t1) \
+            TARGET(OPCODE_CALL_##t0##t1) \
+            { \
+                long idx; \
+                Value* ptr; \
+                Value curr; \
+                Value loc; \
+                \
+                /* getUint */ \
+                try(Tok_getLoc(t0, Vec_at_unsafe(v, 0, Tok), m, &idx)); \
+                if (idx < 0) return Error_CannotWriteToNMem; \
+                ptr = Vec_at_unsafe(&m->mem, idx, Value); \
+                if (ptr->Long < 0) return Error_CannotWriteToNMem; \
+                \
+                /* writeValue */ \
+                ptr->Long++; \
+                \
+                try(Mem_mem_at(m, -1, &curr)); \
+                curr.Long++; \
+                try(Mem_mem_set(m, ptr->Long, &curr)); \
+                try(Tok_getValue(t1, Vec_at_unsafe(v, 1, Tok), m, &loc)); \
+                Code_ptr_set(c, loc.Long-1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_CALL(s, product, d) _DEF_OPCODE_CALL CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_RET(t0) \
+            TARGET(OPCODE_RET_##t0) \
+            { \
+                Value* ptr; \
+                Value loc; \
+                long idx; \
+                \
+                /* getUint */ \
+                try(Tok_getLoc(t0, Vec_at_unsafe(v, 0, Tok), m, &idx)); \
+                if (idx < 0) return Error_CannotWriteToNMem; \
+                ptr = Vec_at_unsafe(&m->mem, idx, Value); \
+                if (ptr->type != 'L') return Error_NotInteger; \
+                \
+                try(Mem_mem_at(m, ptr->Long, &loc)); \
+                \
+                /* writeValue */ \
+                ptr->Long--; \
+                \
+                Code_ptr_set(c, loc.Long-1); \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_RET(s, product, d) _DEF_OPCODE_RET CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_SYS(t0) \
+            TARGET(OPCODE_SYS_##t0) \
+            { \
+                Value code; \
+                try(Tok_getValue(t0, Vec_at_unsafe(v, 0, Tok), m, &code)); \
+                switch (code.Long) { \
+                    case SYSCALLCODE_EXIT: \
+                        try(sys_exit(m)); \
+                        break; \
+                    case SYSCALLCODE_READ: \
+                        try(sys_read(m)); \
+                        break; \
+                    case SYSCALLCODE_WRITE: \
+                        try(sys_write(m)); \
+                        break; \
+                    case SYSCALLCODE_OPEN: \
+                        try(sys_open(m)); \
+                        break; \
+                    case SYSCALLCODE_CLOSE: \
+                        try(sys_close(m)); \
+                        break; \
+                } \
+                DISPATCH(); \
+            }
+#define DEF_OPCODE_SYS(s, product, d) _DEF_OPCODE_SYS CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
+
+#define _DEF_OPCODE_PRINT_NUM(t0, t1) \
+            TARGET(OPCODE_PRINT_NUM_##t0##t1) \
+            { \
+                Value fd; \
+                Value value; \
+                try(Tok_getValue(t0, Vec_at(v, 0, Tok), m, &fd)); \
+                try(Tok_getValue(t1, Vec_at(v, 1, Tok), m, &value)); \
+                if (value.type == 'D'){ \
+                    fprintf(fdopen(fd.Long, "w"), "%f\n", value.Double); \
+                }else{ \
+                    fprintf(fdopen(fd.Long, "w"), "%ld\n", value.Long); \
+                } \
+                DISPATCH() \
+            }
+#define DEF_OPCODE_PRINT_NUM(s, product, d) _DEF_OPCODE_PRINT_NUM CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
 
 Error
 run(Mem* m, Code* c)
@@ -105,523 +510,67 @@ run(Mem* m, Code* c)
 
         GOTO(l->opcode)
         {
-            TARGET(OPCODE_HALT)
+            TARGET(OPCODE_HALT_)
             {
+                *Vec_at_unsafe(&m->mem, 0, Value) = Value(Long, 0);
                 goto end;
             }
 
-            TARGET(OPCODE_NOP)
+            TARGET(OPCODE_NOP_)
             {
                 DISPATCH()
             }
 
-            TARGET(OPCODE_MOV)
-            {
-                argcGuard(v, 2);
-                Value val;
-                try(Tok_getValue(Vec_at_unsafe(v, 1, Tok), m, &val));
-                try(Tok_writeValue(Vec_at_unsafe(v, 0, Tok), m, &val));
-                DISPATCH()
-            }
+            GENERATE(DEF_OPCODE_MOV, OPCODE_MOV, OPCODE_MOV_ARG())
+            GENERATE(DEF_OPCODE_CPY, OPCODE_CPY, OPCODE_CPY_ARG())
+            GENERATE(DEF_OPCODE_VAR, OPCODE_VAR, OPCODE_VAR_ARG())
+            GENERATE(DEF_OPCODE_LOC, OPCODE_LOC, OPCODE_LOC_ARG())
+            GENERATE(DEF_OPCODE_ALLC, OPCODE_ALLC, OPCODE_ALLC_ARG())
+            GENERATE(DEF_OPCODE_PUSH, OPCODE_PUSH, OPCODE_PUSH_ARG())
+            GENERATE(DEF_OPCODE_POP, OPCODE_POP, OPCODE_POP_ARG())
+            GENERATE(DEF_OPCODE_LTOF, OPCODE_LTOF, OPCODE_LTOF_ARG())
+            GENERATE(DEF_OPCODE_FTOL, OPCODE_FTOL, OPCODE_FTOL_ARG())
 
-            TARGET(OPCODE_CPY)
-            {
-                argcGuard(v, 3);
-                long des;
-                try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &des));
-                long src;
-                try(Tok_getLoc(Vec_at_unsafe(v, 1, Tok), m, &src));
-                size_t size;
-                try(Tok_getUint(Vec_at_unsafe(v, 2, Tok), m, &size));
+            GENERATE(DEF_OPCODE_ADD, OPCODE_ADD, OPCODE_ADD_ARG())
+            GENERATE(DEF_OPCODE_SUB, OPCODE_SUB, OPCODE_SUB_ARG())
+            GENERATE(DEF_OPCODE_MUL, OPCODE_MUL, OPCODE_MUL_ARG())
+            GENERATE(DEF_OPCODE_DIV, OPCODE_DIV, OPCODE_DIV_ARG())
+            GENERATE(DEF_OPCODE_MOD, OPCODE_MOD, OPCODE_MOD_ARG())
+            GENERATE(DEF_OPCODE_INC, OPCODE_INC, OPCODE_INC_ARG())
+            GENERATE(DEF_OPCODE_DEC, OPCODE_DEC, OPCODE_DEC_ARG())
 
-                Value val;
-                for (size_t i = 0; i < size; i++){
-                    try(Mem_mem_at(m, src, &val));
-                    try(Tok_writeValue(&Tok(Idx, des), m, &val));
-                    idxIncr(&des, 1);
-                    idxIncr(&src, 1);
-                }
-                DISPATCH()
-            }
+            GENERATE(DEF_OPCODE_ADDF, OPCODE_ADDF, OPCODE_ADDF_ARG())
+            GENERATE(DEF_OPCODE_SUBF, OPCODE_SUBF, OPCODE_SUBF_ARG())
+            GENERATE(DEF_OPCODE_MULF, OPCODE_MULF, OPCODE_MULF_ARG())
+            GENERATE(DEF_OPCODE_DIVF, OPCODE_DIVF, OPCODE_DIVF_ARG())
+            GENERATE(DEF_OPCODE_INCF, OPCODE_INCF, OPCODE_INCF_ARG())
+            GENERATE(DEF_OPCODE_DECF, OPCODE_DECF, OPCODE_DECF_ARG())
 
-            TARGET(OPCODE_VAR)
-            {
-                argcGuard(v, 2);
-                HashIdx var;
-                long idx;
-                try(Tok_getSym(Vec_at_unsafe(v, 0, Tok), &var));
-                try(Tok_getLoc(Vec_at_unsafe(v, 1, Tok), m, &idx));
-                Mem_var_set(m, var.idx, idx);
-                DISPATCH()
-            }
+            GENERATE(DEF_OPCODE_EQ, OPCODE_EQ, OPCODE_EQ_ARG())
+            GENERATE(DEF_OPCODE_NE, OPCODE_NE, OPCODE_NE_ARG())
+            GENERATE(DEF_OPCODE_GT, OPCODE_GT, OPCODE_GT_ARG())
+            GENERATE(DEF_OPCODE_LT, OPCODE_LT, OPCODE_LT_ARG())
 
-            TARGET(OPCODE_LOC)
-            {
-                argcGuard(v, 1);
-                long i;
-                try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &i));
-                *Vec_at_unsafe(&m->mem, 0, Value) = Value(Long, i);
-                DISPATCH()
-            }
+            GENERATE(DEF_OPCODE_EQF, OPCODE_EQF, OPCODE_EQF_ARG())
+            GENERATE(DEF_OPCODE_NEF, OPCODE_NEF, OPCODE_NEF_ARG())
+            GENERATE(DEF_OPCODE_GTF, OPCODE_GTF, OPCODE_GTF_ARG())
+            GENERATE(DEF_OPCODE_LTF, OPCODE_LTF, OPCODE_LTF_ARG())
 
-            TARGET(OPCODE_ALLC)
-            {
-                argcGuard(v, 1);
-                Tok* sizeTok = Vec_at_unsafe(v, 0, Tok);
-                size_t sizeS;
-                try(Tok_getUint(sizeTok, m, &sizeS));
-                for (int i = 0; i < sizeS; i++){
-                    Mem_mem_push(m, 1);
-                }
-                DISPATCH()
-            }
-            
-            TARGET(OPCODE_PUSH)
-            {
-                argcGuard(v, 2);
-                long idx;
-                Value* ptr;
-                Value val;
+            GENERATE(DEF_OPCODE_AND, OPCODE_AND, OPCODE_AND_ARG())
+            GENERATE(DEF_OPCODE_OR, OPCODE_OR, OPCODE_OR_ARG())
+            GENERATE(DEF_OPCODE_NOT, OPCODE_NOT, OPCODE_NOT_ARG())
 
-                // getUint
-                try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
-                if (idx < 0) return Error_CannotWriteToNMem;
-                ptr = Vec_at_unsafe(&m->mem, idx, Value);
-                if (ptr->type != 'L') return Error_NotInteger;
-                if (ptr->Long < 0) return Error_CannotWriteToNMem;
+            GENERATE(DEF_OPCODE_JMP, OPCODE_JMP, OPCODE_JMP_ARG())
+            GENERATE(DEF_OPCODE_JC, OPCODE_JC, OPCODE_JC_ARG())
+            GENERATE(DEF_OPCODE_LBL, OPCODE_LBL, OPCODE_LBL_ARG())
+            GENERATE(DEF_OPCODE_CALL, OPCODE_CALL, OPCODE_CALL_ARG())
+            GENERATE(DEF_OPCODE_RET, OPCODE_RET, OPCODE_RET_ARG())
+            GENERATE(DEF_OPCODE_SYS, OPCODE_SYS, OPCODE_SYS_ARG())
 
-                // writeValue
-                ptr->Long++;
-
-                try(Tok_getValue(Vec_at_unsafe(v, 1, Tok), m, &val));
-                try(Mem_mem_set(m, ptr->Long, &val));
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_POP)
-            {
-                argcGuard(v, 1);
-                long idx;
-                Value* ptr;
-                Value val;
-
-                // getUint
-                try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
-                if (idx < 0) return Error_CannotWriteToNMem;
-                ptr = Vec_at_unsafe(&m->mem, idx, Value);
-                if (ptr->type != 'L') return Error_NotInteger;
-
-                try(Mem_mem_at(m, ptr->Long, &val));
-                *Vec_at_unsafe(&m->mem, 0, Value) = val;
-
-                // writeValue
-                ptr->Long--;
-                DISPATCH()
-            }
-            
-            TARGET(OPCODE_LTOF)
-            {
-                argcGuard(v, 1);
-                long idx;
-                try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
-                if (idx < 0) return Error_CannotWriteToNMem;
-                Value* val = Vec_at_unsafe(&m->mem, idx, Value);
-                if (val->type == 'L'){
-                    val->Double = val->Long;
-                }
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_FTOL)
-            {
-                argcGuard(v, 1);
-                long idx;
-                try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
-                if (idx < 0) return Error_CannotWriteToNMem;
-                Value* val = Vec_at_unsafe(&m->mem, idx, Value);
-                if (val->type == 'D'){
-                    val->Long = val->Double;
-                }
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_ADD)
-            {
-                math(+, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_SUB)
-            {
-                math(-, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_MUL)
-            {
-                math(*, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_DIV)
-            {
-                math(/, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_MOD)
-            {
-                Value left, right;
-                try(math_parseArg(v, m, &left, &right));
-                long result = left.Long % right.Long;
-                Mem_mem_set(m, 0, &Value(Long, result));
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_INC)
-            {
-                incrDecr(++, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_DEC)
-            {
-                incrDecr(--, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_ADDF)
-            {
-                mathf(+, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_SUBF)
-            {
-                mathf(-, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_MULF)
-            {
-                mathf(*, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_DIVF)
-            {
-                mathf(/, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_INCF)
-            {
-                incrDecrf(++, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_DECF)
-            {
-                incrDecrf(--, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_EQ)
-            {
-                math(==, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_NE)
-            {
-                math(!=, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_GT)
-            {
-                math(>, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_LT)
-            {
-                math(<, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_EQF)
-            {
-                mathf(==, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_NEF)
-            {
-                mathf(!=, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_GTF)
-            {
-                mathf(>, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_LTF)
-            {
-                mathf(<, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_AND)
-            {
-                math(&&, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_OR)
-            {
-                math(||, v, m);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_NOT)
-            {
-                argcGuard(v, 1);
-                Value value;
-                try(Tok_getValue(Vec_at_unsafe(v, 0, Tok), m, &value));
-                long result = value.Long == 0;
-                *Vec_at_unsafe(&m->mem, 0, Value) = Value(Long, result);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_JMP)
-            {
-                argcGuard(v, 1);
-                size_t loc;
-                try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &loc));
-                Code_ptr_set(c, loc);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_JC)
-            {
-                argcGuard(v, 2);
-                Value cond;
-                try(Tok_getValue(Vec_at_unsafe(v, 0, Tok), m, &cond));
-                if (cond.Long){
-                    size_t loc;
-                    try(Tok_getUint(Vec_at_unsafe(v, 1, Tok), m, &loc));
-                    Code_ptr_set(c, loc);
-                }
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_LBL)
+            TARGET(OPCODE_SRC_Sym)
                 DISPATCH()
 
-            TARGET(OPCODE_CALL)
-            {
-                argcGuard(v, 2);
-                long idx;
-                Value* ptr;
-                Value curr;
-                size_t loc;
-
-                // getUint
-                try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
-                if (idx < 0) return Error_CannotWriteToNMem;
-                ptr = Vec_at_unsafe(&m->mem, idx, Value);
-                if (ptr->type != 'L') return Error_NotInteger;
-                if (ptr->Long < 0) return Error_CannotWriteToNMem;
-
-                // writeValue
-                ptr->Long++;
-
-                try(Mem_mem_at(m, -1, &curr));
-                curr.Long++;
-                try(Mem_mem_set(m, ptr->Long, &curr));
-                try(Tok_getUint(Vec_at_unsafe(v, 1, Tok), m, &loc));
-                Code_ptr_set(c, loc);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_RET)
-            {
-                argcGuard(v, 1);
-                Value* ptr;
-                Value loc;
-                long idx;
-
-                // getUint
-                try(Tok_getLoc(Vec_at_unsafe(v, 0, Tok), m, &idx));
-                if (idx < 0) return Error_CannotWriteToNMem;
-                ptr = Vec_at_unsafe(&m->mem, idx, Value);
-                if (ptr->type != 'L') return Error_NotInteger;
-
-                try(Mem_mem_at(m, ptr->Long, &loc));
-
-                // writeValue
-                ptr->Long--;
-
-                Code_ptr_set(c, loc.Long);
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_EXIT)
-            {
-                argcGuard(v, 1);
-                long exitCode;
-                try(Tok_getInt(Vec_at_unsafe(v, 0, Tok), m, &exitCode));
-                exit(exitCode);
-            }
-
-            TARGET(OPCODE_WRITE)
-            {
-                argcGuard(v, 3);
-                size_t fd;
-                try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &fd));
-                bool* slot = Vec_at_unsafe(&m->fd, fd, bool);
-                if (!slot || !*slot){
-                    return Error_BadFileDescriptor;
-                }
-                FILE* f = fdopen(fd, "w");
-                long srcIdx;
-                try(Tok_getLoc(Vec_at_unsafe(v, 1, Tok), m, &srcIdx));
-                size_t size;
-                try(Tok_getUint(Vec_at_unsafe(v, 2, Tok), m, &size));
-                size_t i;
-                for (i = 0; i < size; i++)
-                {
-                    Value value;
-                    try(Mem_mem_at(m, srcIdx, &value));
-                    char ch = value.Long;
-                    if (!fwrite(&ch, sizeof(char), 1, f))
-                        return Error_IoError;
-                    idxIncr(&srcIdx, 1);
-                }
-                fflush(f);
-                Mem_mem_set(m, 0, &Value(Long, i));
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_READ)
-            {
-                argcGuard(v, 3);
-                size_t fd;
-                try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &fd));
-                bool* slot = Vec_at_unsafe(&m->fd, fd, bool);
-                if (!slot || !*slot){
-                    return Error_BadFileDescriptor;
-                }
-                FILE* f = fdopen(fd, "r");
-                long desIdx;
-                try(Tok_getLoc(Vec_at_unsafe(v, 1, Tok), m, &desIdx));
-                size_t size;
-                try(Tok_getUint(Vec_at_unsafe(v, 2, Tok), m, &size));
-                char buf[MAX_INPUT];
-                size_t readSize = fread(buf, sizeof(char), MAX_INPUT, f);
-                if (!readSize){
-                    return Error_IoError;
-                }
-                size_t i;
-                for (i = 0; i < readSize && i < size; i++){
-                    Value c = Value(Long, buf[i]);
-                    try(Mem_mem_set(m, desIdx+i, &c));
-                }
-                Mem_mem_set(m, 0, &Value(Long, i));
-                DISPATCH()
-            }
-
-            // Open file and set [0] to fd
-            //      open) name(Ptr), option(Value)
-            //
-            // Open options) number consisting 6 or less digits
-            //
-            //  _ _ _ _ _ _
-            //  6 5 4 3 2 1
-            //
-            //  1) read
-            //  2) write
-            //  3) append
-            //  4) truncate
-            //  5) create
-            //  6) create_new
-            //
-            //  All digits should be either be 0 or 1, representing boolean value.
-            //  Boolean values will be passed to std))fs))OpenOptions.
-            //  Read rust docs for more details about each option.
-            //
-            //  Example) opening text.txt in read only mode
-            //      open)"text.txt",1
-            //
-            //  Example) opening text.txt in write-only mode, 
-            //           create file if it does not exists,
-            //           and will truncate it if it does.
-            //      open)"text.txt",11010
-            //
-            TARGET(OPCODE_OPEN)
-            {
-                argcGuard(v, 2);
-                Str name = Str();
-                Tok t = *Vec_at_unsafe(v, 0, Tok);
-                // if (t.tokType == Sym){
-                //     // borrow
-                //     name = t.Sym.sym;
-                // }else{
-                    long namePtr;
-                    try(Tok_getLoc(&t, m, &namePtr));
-                    try(Mem_readLtl(m, namePtr, &name));
-                // }
-                size_t oVal;
-                try(Tok_getUint(Vec_at_unsafe(v, 1, Tok), m, &oVal));
-                int oflag;
-                try(parseOpenOption(oVal, &oflag));
-                int fd = open(Str_raw(&name), oflag);
-                if (fd == -1){
-                    return Error_IoError;
-                }
-                bool* slot = Vec_at_unsafe(&m->fd, fd, bool);
-                if (!slot){
-                    return Error_ExceedOpenLimit;
-                }
-                *slot = true;
-                Mem_mem_set(m, 0, &Value(Long, fd));
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_CLOSE)
-            {
-                argcGuard(v, 1);
-                size_t fd;
-                try(Tok_getUint(Vec_at_unsafe(v, 0, Tok), m, &fd));
-                bool* slot = Vec_at_unsafe(&m->fd, fd, bool);
-                if (!slot || !*slot){
-                    return Error_BadFileDescriptor;
-                }
-                close(fd);
-                *slot = false;
-                DISPATCH()
-            }
-
-            TARGET(OPCODE_SRC)
-                DISPATCH()
-
-            TARGET(OPCODE_PRINT_NUM)
-            {
-                argcGuard(v, 2);
-                size_t fd;
-                Value value;
-                try(Tok_getUint(Vec_at(v, 0, Tok), m, &fd));
-                try(Tok_getValue(Vec_at(v, 1, Tok), m, &value));
-                if (value.type == 'D'){
-                    fprintf(fdopen(fd, "w"), "%f\n", value.Double);
-                }else{
-                    fprintf(fdopen(fd, "w"), "%ld\n", value.Long);
-                }
-                DISPATCH()
-            }
+            GENERATE(DEF_OPCODE_PRINT_NUM, OPCODE_PRINT_NUM, OPCODE_PRINT_NUM_ARG())
         }
     }
 end:
