@@ -381,7 +381,7 @@
             { \
                 Value loc; \
                 try(Tok_getValue(t0, Vec_at_unsafe(v, 0, Tok), m, &loc)); \
-                Code_ptr_set(c, loc.Long-1); \
+                Code_ptr_set(c, loc.Long); \
                 DISPATCH() \
             }
 #define DEF_OPCODE_JMP(s, product, d) _DEF_OPCODE_JMP CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
@@ -394,7 +394,7 @@
                 if (cond.Long){ \
                     Value loc; \
                     try(Tok_getValue(t1, Vec_at_unsafe(v, 1, Tok), m, &loc)); \
-                    Code_ptr_set(c, loc.Long-1); \
+                    Code_ptr_set(c, loc.Long); \
                 } \
                 DISPATCH() \
             }
@@ -426,7 +426,7 @@
                 curr.Long++; \
                 try(Mem_mem_set(m, ptr->Long, &curr)); \
                 try(Tok_getValue(t1, Vec_at_unsafe(v, 1, Tok), m, &loc)); \
-                Code_ptr_set(c, loc.Long-1); \
+                Code_ptr_set(c, loc.Long); \
                 DISPATCH() \
             }
 #define DEF_OPCODE_CALL(s, product, d) _DEF_OPCODE_CALL CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))
@@ -449,7 +449,7 @@
                 /* writeValue */ \
                 ptr->Long--; \
                 \
-                Code_ptr_set(c, loc.Long-1); \
+                Code_ptr_set(c, loc.Long); \
                 DISPATCH() \
             }
 #define DEF_OPCODE_RET(s, product, d) _DEF_OPCODE_RET CHAOS_PP_SEQ_TO_TUPLE(CHAOS_PP_SEQ_TAIL(product))

@@ -15,9 +15,8 @@ lbl: main
     var: ctr, [$stack]
     # loop {
     lbl: loop_start
-        # ctr = sum(ctr, 1)
-        add: $ctr, 1
-        mov: $ctr, $?
+        # ctr++
+        inc: $ctr
         # if (ctr == 10000000) break
         eq: $ctr, 10000000
         jc: $?, loop_end
