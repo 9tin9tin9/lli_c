@@ -6,12 +6,12 @@
 #define SET_LINE_ADDR(line) *Vec_at_unsafe(&m->mem, 1, Value) = Value(Long, line);
 
 #if COMPUTED_GOTO
-    #define GOTO(op) DISPATCH()
-    #define TARGET(op) op: SET_LINE_ADDR(Code_ptr(c)-1);
+    #define GOTO(op) NEXT_INTR(Code_ptr(c)); goto *jumpTable[op];
+    #define TARGET(op) op: SET_LINE_ADDR(Code_ptr(c));
     #define DISPATCH() NEXT_INTR(Code_ptr(c)++); goto *jumpTable[l->opcode];
 #else
     #define GOTO(op) NEXT_INTR(Code_ptr(c)); switch (op)
-    #define TARGET(op) case op: SET_LINE_ADDR(Code_ptr(c)-1);
+    #define TARGET(op) case op: SET_LINE_ADDR(Code_ptr(c));
     #define DISPATCH() NEXT_INTR(Code_ptr(c)++); break;
 #endif
 
